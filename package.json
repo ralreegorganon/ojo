@@ -27,7 +27,9 @@
   "dependencies": {
     "d3": "^4.12.0",
     "d3-scale-chromatic": "^1.1.1",
+    "lodash": "^4.17.4",
     "poisson-disk-sampling": "^1.0.2",
+    "save-svg-as-png": "^1.2.0",
     "seedrandom": "^2.4.3",
     "simplex-noise": "^2.3.0"
   }
