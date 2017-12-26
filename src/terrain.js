@@ -52,27 +52,30 @@ function setElevations (polygons) {
 }
 
 function setNeighbors (diagram, polygons, links) {
-  let siteToPolygon = {}
+  let siteToPolygon = new Map()
 
   polygons.map(function (p, i) {
     p.neighbors = []
-    siteToPolygon[p.data] = p
+    siteToPolygon.set(p.data, p)
   })
 
   links.forEach(function (l) {
-    siteToPolygon[l.source].neighbors.push(siteToPolygon[l.target])
-    siteToPolygon[l.target].neighbors.push(siteToPolygon[l.source])
+    let pSource = siteToPolygon.get(l.source)
+    let pTarget = siteToPolygon.get(l.target)
+
+    pSource.neighbors.push(pTarget)
+    pTarget.neighbors.push(pSource)
   })
 }
 
 function setType (diagram, polygons) {
   let queue = []
-  let used = []
+  let used = new Set()
 
   let startIndex = diagram.find(0, 0).index
   let start = polygons[startIndex]
   queue.push(start)
-  used.push(start)
+  used.add(start)
 
   let type = 'Ocean'
   start.featureType = type
@@ -81,11 +84,11 @@ function setType (diagram, polygons) {
     let p = queue[0]
     queue.shift()
     p.neighbors.forEach(function (n) {
-      if (used.indexOf(n) < 0 && n.elevation < 0.2) {
+      if (!used.has(n) && n.elevation < 0.2) {
         n.featureType = type
         n.featureIndex = 0
         queue.push(n)
-        used.push(n)
+        used.add(n)
       }
     })
   }
@@ -117,30 +120,30 @@ function setType (diagram, polygons) {
     start.featureType = type
     start.featureIndex = featureIndex
     queue.push(start)
-    used.push(start)
+    used.add(start)
     while (queue.length > 0) {
       let p = queue[0]
       queue.shift()
       p.neighbors.forEach(function (n) {
-        let alreadyProcessed = used.indexOf(n)
+        let alreadyProcessed = used.has(n)
         let elevationAboveMin = n.elevation >= greater
         let elevationBelowMax = n.elevation < less
-        if (alreadyProcessed < 0 && elevationAboveMin && elevationBelowMax) {
+        if (!alreadyProcessed && elevationAboveMin && elevationBelowMax) {
           n.featureType = type
           n.featureIndex = featureIndex
           queue.push(n)
-          used.push(n)
+          used.add(n)
         }
       })
     }
     unmarked = polygons.filter(p => !p.featureType)
   }
 
-  // let oceanpoly = groupBy(polygons.filter(p => p.featureType === 'Ocean'), p => p.featureIndex)
-  // let landpoly = groupBy(polygons.filter(p => p.featureType === 'Land'), p => p.featureIndex)
-  // let lakepoly = groupBy(polygons.filter(p => p.featureType === 'Lake'), p => p.featureIndex)
+  let oceanpoly = groupBy(polygons.filter(p => p.featureType === 'Ocean'), p => p.featureIndex)
+  let landpoly = groupBy(polygons.filter(p => p.featureType === 'Land'), p => p.featureIndex)
+  let lakepoly = groupBy(polygons.filter(p => p.featureType === 'Lake'), p => p.featureIndex)
 
-  // console.log({oceanpoly, landpoly, lakepoly})
+  console.log({oceanpoly, landpoly, lakepoly})
 }
 
 export function buildTerrain (world) {

@@ -17,4 +17,4 @@ draw(world)
 console.timeEnd('draw')
 
 console.timeEnd('generate map')
-saveSvgAsPng(document.getElementById('derp'), defaultMapParameters.seed + '.png')
+// saveSvgAsPng(document.getElementById('derp'), defaultMapParameters.seed + '.png')
