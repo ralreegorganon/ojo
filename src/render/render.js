@@ -1,15 +1,15 @@
 import * as d3 from 'd3'
-import {defaultMapParameters} from './parameters.js'
+import { mapParameters } from 'parameters'
 
 let colorLinearOcean = d3.scaleLinear(d3.interpolateHcl)
-  .domain([0, 0.2])
+  .domain([0, mapParameters.seaLevel])
   .range([
     '#71ABD8', // -10000m dark blue
     '#D8F2FE' //     0m light-blue
   ])
 
 let colorLinearLand = d3.scaleLinear(d3.interpolateHcl)
-  .domain([0.2, 0.4, 0.7, 0.95])
+  .domain([mapParameters.seaLevel, 0.4, 0.7, 0.95]) // 0.2, 0.4, 0.7, 0.95
   .range([
     '#94BF8B', //     1m green
     '#EFEBC0', //   300m yellow
@@ -25,11 +25,11 @@ let colorGrayscaleElevation = d3.scaleLinear(d3.interpolateHcl)
 function colorFeatureType (i) {
   switch (i.featureType) {
     case 'Ocean':
-      return 'blue'
+      return '#71ABD8'
     case 'Land':
-      return 'green'
+      return '#94BF8B'
     case 'Lake':
-      return 'yellow'
+      return '#D8F2FE'
     default:
       return 'white'
   }
@@ -48,22 +48,39 @@ function drawTriangles (g, triangles) {
   })
 }
 
+function polygonFillColor (polygon) {
+  let elevation = polygon.elevation
+
+  if (mapParameters.render.polygon.useStepInsteadOfElevation) {
+    elevation = polygon.step
+  }
+
+  switch (mapParameters.render.polygon.color) {
+    case 'greyscale':
+      return colorGrayscaleElevation(elevation)
+    case 'featureType':
+      return colorFeatureType(polygon)
+    case 'colorized':
+      return elevation < mapParameters.seaLevel ? colorLinearOcean(elevation) : colorLinearLand(elevation)
+    default:
+      return 1
+  }
+}
+
 function drawPolygons (g, polygons) {
   polygons.map(function (i, d) {
     g.attr('fill', 'white')
     g.append('path')
       .attr('d', 'M' + i.join('L') + 'Z')
       .attr('id', d)
-      //.attr('fill', colorGrayscaleElevation(i.elevation))
-      //.attr('fill', colorFeatureType(i))
-      .attr('fill', i.elevation < 0.2 ? colorLinearOcean(i.elevation) : colorLinearLand(i.elevation))
+      .attr('fill', polygonFillColor(i))
   })
 }
 
 function drawCoastline (g, polygons, diagram) {
   let line = []
   for (let i = 0; i < polygons.length; i++) {
-    if (polygons[i].elevation >= 0.2) {
+    if (polygons[i].elevation >= mapParameters.seaLevel) {
       let cell = diagram.cells[i]
       cell.halfedges.forEach(function (e) {
         let edge = diagram.edges[e]
@@ -72,7 +89,7 @@ function drawCoastline (g, polygons, diagram) {
           if (ea === i) {
             ea = edge.right.index
           }
-          if (polygons[ea].elevation < 0.2) {
+          if (polygons[ea].elevation < mapParameters.seaLevel) {
             // store edge start and end point separately
             let start = edge[0].join(' ')
             let end = edge[1].join(' ')
@@ -87,15 +104,15 @@ function drawCoastline (g, polygons, diagram) {
               number = polygons[ea].featureIndex
             }
             // push Data to array
-            line.push({start, end, type, number})
+            line.push({ start, end, type, number })
           }
         }
       })
     }
   }
 
-  let x = d3.scaleLinear().domain([0, defaultMapParameters.width]).range([0, defaultMapParameters.width])
-  let y = d3.scaleLinear().domain([0, defaultMapParameters.height]).range([0, defaultMapParameters.height])
+  let x = d3.scaleLinear().domain([0, mapParameters.width]).range([0, mapParameters.width])
+  let y = d3.scaleLinear().domain([0, mapParameters.height]).range([0, mapParameters.height])
   let path = d3.line()
     .x(function (d) {
       return x(d.x)
@@ -103,8 +120,7 @@ function drawCoastline (g, polygons, diagram) {
     .y(function (d) {
       return y(d.y)
     })
-    // .curve(d3.curveBasisClosed)
-
+  // .curve(d3.curveBasisClosed)
 
   {
     let number = 0
@@ -115,9 +131,9 @@ function drawCoastline (g, polygons, diagram) {
       let end = edgesOfFeature[0].end // end point of first element
       edgesOfFeature.shift()
       let spl = start.split(' ') // get array from string
-      coast.push({x: spl[0], y: spl[1]}) // push start to coastline
+      coast.push({ x: spl[0], y: spl[1] }) // push start to coastline
       spl = end.split(' ')
-      coast.push({x: spl[0], y: spl[1]}) // push end to coastline
+      coast.push({ x: spl[0], y: spl[1] }) // push end to coastline
       // use for instead of while to avoid eternal loop
       for (let i = 0; end !== start && i < 2000; i++) {
         let next = edgesOfFeature.filter(e => e.start === end || e.end === end)
@@ -128,7 +144,7 @@ function drawCoastline (g, polygons, diagram) {
             end = next[0].start
           }
           spl = end.split(' ')
-          coast.push({x: spl[0], y: spl[1]})
+          coast.push({ x: spl[0], y: spl[1] })
         }
         let rem = edgesOfFeature.indexOf(next[0])
         edgesOfFeature.splice(rem, 1)
@@ -154,9 +170,9 @@ function drawCoastline (g, polygons, diagram) {
       let end = edgesOfFeature[0].end // end point of first element
       edgesOfFeature.shift()
       let spl = start.split(' ') // get array from string
-      coast.push({x: spl[0], y: spl[1]}) // push start to coastline
+      coast.push({ x: spl[0], y: spl[1] }) // push start to coastline
       spl = end.split(' ')
-      coast.push({x: spl[0], y: spl[1]}) // push end to coastline
+      coast.push({ x: spl[0], y: spl[1] }) // push end to coastline
       // use for instead of while to avoid eternal loop
       for (let i = 0; end !== start && i < 2000; i++) {
         let next = edgesOfFeature.filter(e => e.start === end || e.end === end)
@@ -167,7 +183,7 @@ function drawCoastline (g, polygons, diagram) {
             end = next[0].start
           }
           spl = end.split(' ')
-          coast.push({x: spl[0], y: spl[1]})
+          coast.push({ x: spl[0], y: spl[1] })
         }
         let rem = edgesOfFeature.indexOf(next[0])
         edgesOfFeature.splice(rem, 1)
@@ -188,21 +204,25 @@ function drawCoastline (g, polygons, diagram) {
 export function draw (world) {
   let svg = d3.select('svg')
   let g = svg.append('g')
-  svg.attr('width', defaultMapParameters.width)
-  svg.attr('height', defaultMapParameters.height)
-  svg.attr('shape-rendering', defaultMapParameters.shapeRendering)
+  svg.attr('width', mapParameters.width)
+  svg.attr('height', mapParameters.height)
+  svg.attr('shape-rendering', mapParameters.render.shapeRendering)
 
   drawPolygons(g, world.terrain.polygons)
 
-  // drawTriangles(g, world.terrain.triangles)
+  if (mapParameters.render.drawCoastline) {
+    drawCoastline(g, world.terrain.polygons, world.terrain.diagram)
+  }
 
-  drawCoastline(g, world.terrain.polygons, world.terrain.diagram)
+  if (mapParameters.render.drawTriangles) {
+    drawTriangles(g, world.terrain.triangles)
+  }
 
   svg.append('rect')
     .attr('fill', 'none')
     .attr('pointer-events', 'all')
-    .attr('width', defaultMapParameters.width)
-    .attr('height', defaultMapParameters.height)
+    .attr('width', mapParameters.width)
+    .attr('height', mapParameters.height)
     .call(d3.zoom()
       .on('zoom', zoom))
 

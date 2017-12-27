@@ -1,9 +1,9 @@
-import {draw} from './render.js'
-import {buildTerrain} from './terrain.js'
-import {saveSvgAsPng} from 'save-svg-as-png'
-import { defaultMapParameters } from './parameters.js'
+import { draw } from 'render/render'
+import { buildTerrain } from 'terrain/terrain'
+import { mapParameters } from 'parameters'
+import { saveSvgAsPng } from 'save-svg-as-png'
 
-let world = {terrain: null}
+let world = { terrain: null }
 
 console.time('generate map')
 console.time('buildTerrain')
@@ -17,4 +17,7 @@ draw(world)
 console.timeEnd('draw')
 
 console.timeEnd('generate map')
-// saveSvgAsPng(document.getElementById('derp'), defaultMapParameters.seed + '.png')
+
+if (mapParameters.exportPng) {
+  saveSvgAsPng(document.getElementById('derp'), mapParameters.seed + '.png')
+}

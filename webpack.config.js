@@ -14,6 +14,12 @@ module.exports = {
     contentBase: path.join(__dirname, '/public')
   },
   devtool: 'cheap-module-source-map',
+  resolve: {
+    modules: [
+      path.resolve('./src'),
+      path.resolve('./node_modules')
+    ]
+  },
   module: {
     rules: [
       {
