@@ -31,6 +31,7 @@
     "poisson-disk-sampling": "^1.0.2",
     "save-svg-as-png": "^1.2.0",
     "seedrandom": "^2.4.3",
-    "simplex-noise": "^2.3.0"
+    "simplex-noise": "^2.3.0",
+    "vector2d": "^2.1.0"
   }
 }

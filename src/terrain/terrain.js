@@ -4,8 +4,8 @@ import { mapParameters } from 'parameters'
 import {setElevations} from 'terrain/elevation'
 import { classifyTerrain } from 'terrain/classify'
 
-function buildPoints () {
-  let pds = new PoissonDiskSampling([mapParameters.width, mapParameters.height], mapParameters.pdsMaxDistance)
+function buildPoints (maxDistance) {
+  let pds = new PoissonDiskSampling([mapParameters.width, mapParameters.height], maxDistance)
   let points = pds.fill()
   return points
 }
@@ -17,25 +17,66 @@ function relaxPoints (points) {
   return relaxedPoints
 }
 
-export function buildTerrain (world) {
-  let points = buildPoints()
-  console.log({ p: points.length, width: mapParameters.width, height: mapParameters.height })
-
-  let relaxedPoints = relaxPoints(points)
-
+function buildPlates (world) {
   let voronoi = d3.voronoi().extent([[0, 0], [mapParameters.width, mapParameters.height]])
-
+  let points = buildPoints(mapParameters.elevation.plates.maxDistance)
+  let relaxedPoints = relaxPoints(points)
   let diagram = voronoi(relaxedPoints)
   let polygons = diagram.polygons()
   let triangles = diagram.triangles()
   let links = diagram.links()
 
-  world.terrain = {
+  return {
     diagram, polygons, triangles, links
   }
+}
+
+function buildTerrain (world) {
+  let points = buildPoints(mapParameters.pdsMaxDistance)
+  let relaxedPoints = relaxPoints(points)
+  let voronoi = d3.voronoi().extent([[0, 0], [mapParameters.width, mapParameters.height]])
+  let diagram = voronoi(relaxedPoints)
+  let polygons = diagram.polygons()
+  let triangles = diagram.triangles()
+  let links = diagram.links()
+
+  return {
+    diagram, polygons, triangles, links
+  }
+}
+
+function setNeighbors (diagram, polygons, links) {
+  let siteToPolygon = new Map()
+
+  polygons.map(function (p, i) {
+    p.neighbors = []
+    siteToPolygon.set(p.data, p)
+  })
+
+  links.forEach(function (l) {
+    let pSource = siteToPolygon.get(l.source)
+    let pTarget = siteToPolygon.get(l.target)
+
+    pSource.neighbors.push(pTarget)
+    pTarget.neighbors.push(pSource)
+  })
+}
+
+export function build (world) {
+  console.time('buildTerrain')
+  world.terrain = buildTerrain(world)
+  console.timeEnd('buildTerrain')
+
+  console.time('buildPlates')
+  world.terrain.plates = buildPlates(world)
+  console.timeEnd('buildPlates')
+
+  console.time('setNeighbors')
+  setNeighbors(world.terrain.diagram, world.terrain.polygons, world.terrain.links)
+  console.timeEnd('setNeighbors')
 
   console.time('setElevations')
-  setElevations(world.terrain.polygons)
+  setElevations(world.terrain, world.terrain.plates)
   console.timeEnd('setElevations')
 
   console.time('classifyTerrain')

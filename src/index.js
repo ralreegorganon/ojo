@@ -1,14 +1,15 @@
 import { draw } from 'render/render'
-import { buildTerrain } from 'terrain/terrain'
+import { build } from 'terrain/terrain'
 import { mapParameters } from 'parameters'
 import { saveSvgAsPng } from 'save-svg-as-png'
 
 let world = { terrain: null }
 
 console.time('generate map')
-console.time('buildTerrain')
-buildTerrain(world)
-console.timeEnd('buildTerrain')
+
+console.time('build')
+build(world)
+console.timeEnd('build')
 
 console.log(world)
 

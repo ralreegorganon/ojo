@@ -1,23 +1,6 @@
 import { groupBy } from 'lodash'
 import { mapParameters } from 'parameters'
 
-function setNeighbors (diagram, polygons, links) {
-  let siteToPolygon = new Map()
-
-  polygons.map(function (p, i) {
-    p.neighbors = []
-    siteToPolygon.set(p.data, p)
-  })
-
-  links.forEach(function (l) {
-    let pSource = siteToPolygon.get(l.source)
-    let pTarget = siteToPolygon.get(l.target)
-
-    pSource.neighbors.push(pTarget)
-    pTarget.neighbors.push(pSource)
-  })
-}
-
 function setType (diagram, polygons) {
   let queue = []
   let used = new Set()
@@ -97,10 +80,6 @@ function setType (diagram, polygons) {
 }
 
 export function classifyTerrain (terrain) {
-  console.time('setNeighbors')
-  setNeighbors(terrain.diagram, terrain.polygons, terrain.links)
-  console.timeEnd('setNeighbors')
-
   console.time('setType')
   setType(terrain.diagram, terrain.polygons)
   console.timeEnd('setType')

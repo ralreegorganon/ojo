@@ -1,5 +1,6 @@
 import * as d3 from 'd3'
 import { mapParameters } from 'parameters'
+import { ObjectVector } from 'vector2d'
 
 let colorLinearOcean = d3.scaleLinear(d3.interpolateHcl)
   .domain([0, mapParameters.seaLevel])
@@ -74,6 +75,41 @@ function drawPolygons (g, polygons) {
       .attr('d', 'M' + i.join('L') + 'Z')
       .attr('id', d)
       .attr('fill', polygonFillColor(i))
+  })
+}
+
+function drawPlates (g, polygons) {
+  let x = d3.scaleLinear().domain([0, mapParameters.width]).range([0, mapParameters.width])
+  let y = d3.scaleLinear().domain([0, mapParameters.height]).range([0, mapParameters.height])
+  let path = d3.line()
+    .x(function (d) {
+      return x(d.x)
+    })
+    .y(function (d) {
+      return y(d.y)
+    })
+
+  polygons.map(function (p) {
+    g.append('path')
+      .attr('d', 'M' + p.join('L') + 'Z')
+      .attr('stroke', 'white')
+      .attr('stroke-width', '1')
+      .attr('stroke-linejoin', 'round')
+      .attr('fill', 'none')
+
+    if (mapParameters.render.plates.drawForce) {
+      let c = ObjectVector(p.data[0], p.data[1])
+      let ep = c.clone().add(p.force.clone())
+      let data = [{ x: c.getX(), y: c.getY() }, { x: ep.getX(), y: ep.getY() }]
+
+      g.append('path').attr('d', path(data))
+        .attr('stroke', 'red')
+        .attr('stroke-width', '1')
+        .attr('stroke-linejoin', 'round')
+        .attr('fill', 'none')
+        .attr('marker-start', 'url(#marker_square)')
+        .attr('marker-end', 'url(#marker_arrow)')
+    }
   })
 }
 
@@ -190,8 +226,8 @@ function drawCoastline (g, polygons, diagram) {
       }
 
       g.append('path').attr('d', path(coast))
-        .attr('stroke', 'black')
-        .attr('stroke-width', '1')
+        .attr('stroke', 'grey')
+        .attr('stroke-width', '0.9')
         .attr('stroke-linejoin', 'round')
         .attr('fill', 'none')
 
@@ -201,17 +237,49 @@ function drawCoastline (g, polygons, diagram) {
   }
 }
 
+function markers (defs) {
+  let data = [
+    { id: 0, name: 'circle', path: 'M 0, 0  m -5, 0  a 5,5 0 1,0 10,0  a 5,5 0 1,0 -10,0', viewbox: '-6 -6 12 12' },
+    { id: 1, name: 'square', path: 'M 0,0 m -5,-5 L 5,-5 L 5,5 L -5,5 Z', viewbox: '-5 -5 10 10' },
+    { id: 2, name: 'arrow', path: 'M 0,0 m -5,-5 L 5,0 L -5,5 Z', viewbox: '-5 -5 10 10' },
+    { id: 2, name: 'stub', path: 'M 0,0 m -1,-5 L 1,-5 L 1,5 L -1,5 Z', viewbox: '-1 -5 2 10' }
+  ]
+
+  defs.selectAll('marker')
+    .data(data)
+    .enter()
+    .append('marker')
+    .attr('id', d => 'marker_' + d.name)
+    .attr('markerHeight', 5)
+    .attr('markerWidth', 5)
+    .attr('markerUnits', 'strokeWidth')
+    .attr('orient', 'auto')
+    .attr('refX', 0)
+    .attr('refY', 0)
+    .attr('viewBox', d => d.viewbox)
+    .append('svg:path')
+    .attr('d', d => d.path)
+    .attr('fill', 'red')
+}
+
 export function draw (world) {
   let svg = d3.select('svg')
   let g = svg.append('g')
+  let defs = svg.append('defs')
   svg.attr('width', mapParameters.width)
   svg.attr('height', mapParameters.height)
   svg.attr('shape-rendering', mapParameters.render.shapeRendering)
+
+  markers(defs)
 
   drawPolygons(g, world.terrain.polygons)
 
   if (mapParameters.render.drawCoastline) {
     drawCoastline(g, world.terrain.polygons, world.terrain.diagram)
+  }
+
+  if (mapParameters.render.plates.draw) {
+    drawPlates(g, world.terrain.plates.polygons)
   }
 
   if (mapParameters.render.drawTriangles) {
