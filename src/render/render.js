@@ -97,7 +97,7 @@ function drawPlates (g, polygons) {
       .attr('stroke-linejoin', 'round')
       .attr('fill', 'none')
 
-    if (mapParameters.render.plates.drawForce) {
+    if (mapParameters.render.plates.drawForce && p.force !== undefined) {
       let c = ObjectVector(p.data[0], p.data[1])
       let ep = c.clone().add(p.force.clone())
       let data = [{ x: c.getX(), y: c.getY() }, { x: ep.getX(), y: ep.getY() }]

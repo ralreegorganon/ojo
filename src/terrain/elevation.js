@@ -6,20 +6,32 @@ function octavation (x, y) {
   y /= mapParameters.height
 
   let iterations = mapParameters.elevation.octavation.iterations
-  let persistence = mapParameters.elevation.octavation.persistence
-  let scale = mapParameters.elevation.octavation.scale
-  let amplitude = mapParameters.elevation.octavation.amplitude
+  let frequency = mapParameters.elevation.octavation.frequency
 
-  let frequency = scale
+  let amplitude = 1
   let noise = 0
 
   for (let i = 0; i < iterations; i++) {
-    noise += simplex.noise2D(frequency * x, frequency * y) * amplitude
-    amplitude *= persistence
-    frequency *= mapParameters.elevation.octavation.frequencyMultiplier
+    let sn = simplex.noise2D(frequency * x, frequency * y)
+    let bn = billowedNoise(frequency * x, frequency * y)
+    let rn = ridgedNoise(frequency * x, frequency * y)
+
+    let n = sn * mapParameters.elevation.octavation.standardRatio + bn * mapParameters.elevation.octavation.billowedRatio + rn * mapParameters.elevation.octavation.ridgedRatio
+
+    noise += n * amplitude
+    amplitude *= mapParameters.elevation.octavation.persistence
+    frequency *= mapParameters.elevation.octavation.lacunarity
   }
 
   return noise
+}
+
+function billowedNoise (x, y) {
+  return Math.abs(simplex.noise2D(x, y))
+}
+
+function ridgedNoise (x, y) {
+  return 1 - Math.abs(simplex.noise2D(x, y))
 }
 
 function islandMask (x, y) {
@@ -67,7 +79,7 @@ function octavate (polygons) {
 
 function baseline (polygons) {
   polygons.map(function (p) {
-    p.elevation = 0.5
+    p.elevation = 0.0
   })
 }
 
@@ -165,9 +177,24 @@ function distanceFromPointToSegment (x, y, x0, y0, x1, y1, segment) {
 
 export function setElevations (terrain, plates) {
   baseline(terrain.polygons)
-  plateTectonicify(terrain.polygons, plates)
-  octavate(terrain.polygons)
-  normalize(terrain.polygons)
-  sculpt(terrain.polygons, mapParameters.elevation.sculpting)
-  step(terrain.polygons)
+
+  if (mapParameters.elevation.plates.apply) {
+    plateTectonicify(terrain.polygons, plates)
+  }
+
+  if (mapParameters.elevation.octavation.apply) {
+    octavate(terrain.polygons)
+  }
+
+  if (mapParameters.elevation.normalize.apply) {
+    normalize(terrain.polygons)
+  }
+
+  if (mapParameters.elevation.sculpting.apply) {
+    sculpt(terrain.polygons, mapParameters.elevation.sculpting.amount)
+  }
+
+  if (mapParameters.elevation.step.apply) {
+    step(terrain.polygons)
+  }  
 }

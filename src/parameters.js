@@ -11,19 +11,32 @@ export const mapParameters = {
   seaLevel: 0.2,
   elevation: {
     octavation: {
-      iterations: 16,
+      apply: true,
+      iterations: 10,
       persistence: 0.5,
-      frequencyMultiplier: 2,
-      scale: 2,
-      amplitude: 1
+      lacunarity: 2,
+      frequency: 2,
+      standardRatio: 1,
+      billowedRatio: 0,
+      ridgedRatio: 0
     },
-    sculpting: 2,
+    sculpting: {
+      apply: true,
+      amount: 2
+    },
     islandMask: {
       apply: true,
       margin: 5
     },
     plates: {
+      apply: true,
       maxDistance: 125
+    },
+    normalize: {
+      apply: true
+    },
+    step: {
+      apply: true
     }
   },
   render: {
