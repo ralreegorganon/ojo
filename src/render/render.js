@@ -286,6 +286,14 @@ export function draw (world) {
     drawTriangles(g, world.terrain.triangles)
   }
 
+  if (mapParameters.render.drawSeed) {
+    svg.append('text')
+      .attr('x', '0')
+      .attr('y', '10')
+      .attr('dy', '.35em')
+      .text(mapParameters.seed)
+  }
+
   svg.append('rect')
     .attr('fill', 'none')
     .attr('pointer-events', 'all')
