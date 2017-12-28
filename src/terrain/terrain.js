@@ -1,8 +1,9 @@
 import * as d3 from 'd3'
 import PoissonDiskSampling from 'poisson-disk-sampling'
 import { mapParameters } from 'parameters'
-import {setElevations} from 'terrain/elevation'
+import { setElevations } from 'terrain/elevation'
 import { classifyTerrain } from 'terrain/classify'
+import { setTemperatures } from 'terrain/temperature'
 
 function buildPoints (maxDistance) {
   let pds = new PoissonDiskSampling([mapParameters.width, mapParameters.height], maxDistance)
@@ -82,4 +83,8 @@ export function build (world) {
   console.time('classifyTerrain')
   classifyTerrain(world.terrain)
   console.timeEnd('classifyTerrain')
+
+  console.time('setTemperatures')
+  setTemperatures(world.terrain)
+  console.timeEnd('setTemperatures')
 }

@@ -1,4 +1,6 @@
 import * as d3 from 'd3'
+import { interpolateSpectral } from 'd3-scale-chromatic'
+import d3Tip from 'd3-tip'
 import { mapParameters } from 'parameters'
 import { ObjectVector } from 'vector2d'
 
@@ -23,6 +25,8 @@ let colorGrayscaleElevation = d3.scaleLinear(d3.interpolateHcl)
     '#000',
     '#FFFFFF'])
 
+let colorTemperature = d3.scaleSequential(interpolateSpectral)
+
 function colorFeatureType (i) {
   switch (i.featureType) {
     case 'Ocean':
@@ -43,8 +47,6 @@ function drawTriangles (g, triangles) {
       .attr('id', d)
       .attr('stroke', 'black')
       .attr('fill', 'none')
-      // .attr('fill', color(i.elevation))
-      // .attr('fill', color2(i.elevation))
       .attr('stroke-width', '0.7')
   })
 }
@@ -75,6 +77,16 @@ function drawPolygons (g, polygons) {
       .attr('d', 'M' + i.join('L') + 'Z')
       .attr('id', d)
       .attr('fill', polygonFillColor(i))
+  })
+}
+
+function drawTemperature (g, polygons) {
+  polygons.map(function (i, d) {
+    g.append('path')
+      .attr('d', 'M' + i.join('L') + 'Z')
+      .attr('id', d)
+      .attr('fill-opacity', mapParameters.render.temperature.opacity)
+      .attr('fill', colorTemperature(1 - i.temperature))
   })
 }
 
@@ -262,17 +274,48 @@ function markers (defs) {
     .attr('fill', 'red')
 }
 
+let tip = d3Tip()
+  .attr('class', 'tooltip')
+  .html(d => {
+    let elevation = Math.round(Math.pow(d.elevation, 4) * 9000)
+    let temperature = Math.round(d.temperature * 100 - 50)
+    let temperaturef = Math.round(temperature * 1.8 + 32)
+    return `
+    <table>
+      <tr><th>e (m)</th><th>t (c)</th><th>t (f)</th></tr>
+      <tr><td>${elevation}</td><td>${temperature}</td><td>${temperaturef}</td></tr>
+    </table>
+    `
+  })
+
+function drawTooltips (g, polygons) {
+  polygons.map(function (i, d) {
+    g.append('path')
+      .attr('d', 'M' + i.join('L') + 'Z')
+      .attr('id', d)
+      .attr('pointer-events', 'all')
+      .attr('fill', 'none')
+      .on('mouseover', d => tip.show(i))
+      .on('mouseout', d => tip.hide())
+  })
+}
+
 export function draw (world) {
   let svg = d3.select('svg')
-  let g = svg.append('g')
-  let defs = svg.append('defs')
   svg.attr('width', mapParameters.width)
   svg.attr('height', mapParameters.height)
   svg.attr('shape-rendering', mapParameters.render.shapeRendering)
 
+  let g = svg.append('g')
+
+  let defs = svg.append('defs')
   markers(defs)
 
   drawPolygons(g, world.terrain.polygons)
+
+  if (mapParameters.render.temperature.draw) {
+    drawTemperature(g, world.terrain.polygons)
+  }
 
   if (mapParameters.render.drawCoastline) {
     drawCoastline(g, world.terrain.polygons, world.terrain.diagram)
@@ -286,6 +329,8 @@ export function draw (world) {
     drawTriangles(g, world.terrain.triangles)
   }
 
+  drawTooltips(g, world.terrain.polygons)
+
   if (mapParameters.render.drawSeed) {
     svg.append('text')
       .attr('x', '0')
@@ -296,11 +341,12 @@ export function draw (world) {
 
   svg.append('rect')
     .attr('fill', 'none')
-    .attr('pointer-events', 'all')
+    .attr('pointer-events', 'none')
     .attr('width', mapParameters.width)
     .attr('height', mapParameters.height)
-    .call(d3.zoom()
-      .on('zoom', zoom))
+    .call(d3.zoom().on('zoom', zoom))
+
+  svg.call(tip)
 
   function zoom () {
     g.attr('transform', d3.event.transform)

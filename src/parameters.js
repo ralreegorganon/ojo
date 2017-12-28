@@ -5,8 +5,9 @@ export const mapParameters = {
   pdsMaxDistance: 4,
   width: 700,
   height: 700,
-  //seed: '1337',
-  seed: new Date().getTime(),
+  // seed: 1514489481526,
+  seed: '1337',
+  // seed: new Date().getTime(),
   exportPng: false,
   seaLevel: 0.2,
   elevation: {
@@ -50,6 +51,10 @@ export const mapParameters = {
     plates: {
       draw: false,
       drawForce: true
+    },
+    temperature: {
+      draw: false,
+      opacity: '1.0'
     },
     drawSeed: true
   }

@@ -1,37 +1,12 @@
 import { ObjectVector } from 'vector2d'
-import { mapParameters, simplex } from 'parameters'
+import { mapParameters } from 'parameters'
+import { octavation } from 'terrain/noise'
 
-function octavation (x, y) {
-  x /= mapParameters.width
-  y /= mapParameters.height
-
-  let iterations = mapParameters.elevation.octavation.iterations
-  let frequency = mapParameters.elevation.octavation.frequency
-
-  let amplitude = 1
-  let noise = 0
-
-  for (let i = 0; i < iterations; i++) {
-    let sn = simplex.noise2D(frequency * x, frequency * y)
-    let bn = billowedNoise(frequency * x, frequency * y)
-    let rn = ridgedNoise(frequency * x, frequency * y)
-
-    let n = sn * mapParameters.elevation.octavation.standardRatio + bn * mapParameters.elevation.octavation.billowedRatio + rn * mapParameters.elevation.octavation.ridgedRatio
-
-    noise += n * amplitude
-    amplitude *= mapParameters.elevation.octavation.persistence
-    frequency *= mapParameters.elevation.octavation.lacunarity
-  }
-
-  return noise
-}
-
-function billowedNoise (x, y) {
-  return Math.abs(simplex.noise2D(x, y))
-}
-
-function ridgedNoise (x, y) {
-  return 1 - Math.abs(simplex.noise2D(x, y))
+function elevationOctavation (x, y) {
+  return octavation(x, y, mapParameters.elevation.octavation.iterations, mapParameters.elevation.octavation.frequency, 
+    mapParameters.elevation.octavation.persistence, mapParameters.elevation.octavation.lacunarity, 
+    mapParameters.elevation.octavation.standardRatio, mapParameters.elevation.octavation.billowedRatio, 
+    mapParameters.elevation.octavation.ridgedRatio)
 }
 
 function islandMask (x, y) {
@@ -73,7 +48,7 @@ function step (polygons) {
 
 function octavate (polygons) {
   polygons.map(function (p) {
-    p.elevation += octavation(p.data[0], p.data[1])
+    p.elevation += elevationOctavation(p.data[0], p.data[1])
   })
 }
 
@@ -196,5 +171,5 @@ export function setElevations (terrain, plates) {
 
   if (mapParameters.elevation.step.apply) {
     step(terrain.polygons)
-  }  
+  }
 }
