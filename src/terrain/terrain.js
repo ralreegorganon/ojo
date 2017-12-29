@@ -4,6 +4,9 @@ import { mapParameters } from 'parameters'
 import { setElevations } from 'terrain/elevation'
 import { classifyTerrain } from 'terrain/classify'
 import { setTemperatures } from 'terrain/temperature'
+import { setWind } from 'terrain/wind'
+import { setPressures } from 'terrain/pressure'
+import { setMoisture } from 'terrain/moisture'
 
 function buildPoints (maxDistance) {
   let pds = new PoissonDiskSampling([mapParameters.width, mapParameters.height], maxDistance)
@@ -50,6 +53,7 @@ function setNeighbors (diagram, polygons, links) {
   let siteToPolygon = new Map()
 
   polygons.map(function (p, i) {
+    p.id = i
     p.neighbors = []
     siteToPolygon.set(p.data, p)
   })
@@ -87,4 +91,16 @@ export function build (world) {
   console.time('setTemperatures')
   setTemperatures(world.terrain)
   console.timeEnd('setTemperatures')
+
+  console.time('setPressures')
+  setPressures(world.terrain)
+  console.timeEnd('setPressures')
+
+  console.time('setWind')
+  setWind(world.terrain)
+  console.timeEnd('setWind')
+
+  console.time('setMoisture')
+  setMoisture(world.terrain)
+  console.timeEnd('setMoisture')
 }

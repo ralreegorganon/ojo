@@ -6,7 +6,9 @@ export const mapParameters = {
   width: 700,
   height: 700,
   // seed: 1514489481526,
-  seed: '1337',
+  // seed: 1514632505452,
+  seed: 1514877216912,
+  // seed: '1337',
   // seed: new Date().getTime(),
   exportPng: false,
   seaLevel: 0.2,
@@ -40,6 +42,11 @@ export const mapParameters = {
       apply: true
     }
   },
+  wind: {
+    tradeWindAngle: 270,
+    tradeWindVelocity: 15,
+    tradeWindInfluence: 0.5
+  },
   render: {
     shapeRendering: 'crispEdges', // auto, optimizeSpeed, crispEdges, geometricPrecision
     polygon: {
@@ -54,7 +61,21 @@ export const mapParameters = {
     },
     temperature: {
       draw: false,
-      opacity: '1.0'
+      opacity: '1.0',
+      color: 'linear' // band, linear
+    },
+    wind: {
+      draw: false,
+      drawWindNetwork: false,
+      drawWindVectors: true,
+      drawWindVelocity: false
+    },
+    pressure: {
+      draw: false
+    },
+    moisture: {
+      draw: false,
+      type: 'moisture' // absoluteHumidity, relativeHumidity, moisture
     },
     drawSeed: true
   }
