@@ -55,6 +55,55 @@ function colorFeatureType (i) {
   }
 }
 
+function colorBiome (biomeName) {
+  switch (biomeName) {
+    case 'polar desert': return '#fcfcfc'
+
+    case 'subpolar dry tundra': return '#808080'
+    case 'subpolar moist tundra': return '#608080'
+    case 'subpolar wet tundra': return '#408090'
+    case 'subpolar rain tundra': return '#2080C0'
+
+    case 'boreal desert': return '#A0A080'
+    case 'boreal dry scrub': return '#80A080'
+    case 'boreal moist forest': return '#60A080'
+    case 'boreal wet forest': return '#40A090'
+    case 'boreal rain forest': return '#20A0C0'
+
+    case 'cool temperate desert': return '#C0C080'
+    case 'cool temperate desert scrub': return '#A0C080'
+    case 'cool temperate steppe': return '#80C080'
+    case 'cool temperate moist forest': return '#60C080'
+    case 'cool temperate wet forest': return '#40C090'
+    case 'cool temperate rain forest': return '#20C0C0'
+
+    case 'warm temperate desert': return '#E0E080'
+    case 'warm temperate desert scrub': return '#C0E080'
+    case 'warm temperate thorn scrub': return '#A0E080'
+    case 'warm temperate dry forest': return '#80E080'
+    case 'warm temperate moist forest': return '#60E080'
+    case 'warm temperate wet forest': return '#40E090'
+    case 'warm temperate rain forest': return '#20E0C0'
+
+    case 'subtropical desert': return '#E0E080'
+    case 'subtropical desert scrub': return '#C0E080'
+    case 'subtropical thorn woodland': return '#A0E080'
+    case 'subtropical dry forest': return '#80E080'
+    case 'subtropical moist forest': return '#60E080'
+    case 'subtropical wet forest': return '#40E090'
+    case 'subtropical rain forest': return '#20E0C0'
+
+    case 'tropical desert': return '#FFFF80'
+    case 'tropical desert scrub': return '#E0FF80'
+    case 'tropical thorn woodland': return '#C0FF80'
+    case 'tropical very dry forest': return '#A0FF80'
+    case 'tropical dry forest': return '#80FF80'
+    case 'tropical moist forest': return '#60FF80'
+    case 'tropical wet forest': return '#40FF90'
+    case 'tropical rain forest': return '#20FFA0'
+  }
+}
+
 function drawTriangles (g, triangles) {
   triangles.map(function (i, d) {
     g.append('path')
@@ -66,14 +115,14 @@ function drawTriangles (g, triangles) {
   })
 }
 
-function polygonFillColor (polygon) {
+function elevationFillColor (polygon) {
   let elevation = polygon.elevation
 
-  if (mapParameters.render.polygon.useStepInsteadOfElevation) {
+  if (mapParameters.render.elevation.useStepInsteadOfElevation) {
     elevation = polygon.step
   }
 
-  switch (mapParameters.render.polygon.color) {
+  switch (mapParameters.render.elevation.color) {
     case 'greyscale':
       return colorGrayscaleElevation(elevation)
     case 'featureType':
@@ -104,13 +153,13 @@ function temperatureFillColor (polygon) {
   }
 }
 
-function drawPolygons (g, polygons) {
+function drawElevation (g, polygons) {
   polygons.map(function (i, d) {
     g.attr('fill', 'white')
     g.append('path')
       .attr('d', 'M' + i.join('L') + 'Z')
       .attr('id', d)
-      .attr('fill', polygonFillColor(i))
+      .attr('fill', elevationFillColor(i))
   })
 }
 
@@ -161,13 +210,24 @@ function drawMoisture (g, polygons) {
       .attr('fill', colorTemperature(colorValue))
       .attr('fill-opacity', '1')
 
-    // if (value < 0.999 && value > 0) {
-    // g.append('text')
-    //   .attr('x', i.data[0])
-    //   .attr('y', i.data[1])
-    //   .attr('font-size', '2px')
-    //   .text(textValue.toFixed(0))
-    // }
+    if (mapParameters.render.moisture.drawAmount) {
+      g.append('text')
+        .attr('x', i.data[0])
+        .attr('y', i.data[1])
+        .attr('font-size', '2px')
+        .text(textValue.toFixed(0))
+    }
+  })
+}
+
+function drawBiomes (g, polygons) {
+  polygons.map(function (i, d) {
+    if (i.featureType === 'Land') {
+      g.append('path')
+        .attr('d', 'M' + i.join('L') + 'Z')
+        .attr('id', d)
+        .attr('fill', colorBiome(i.biome.name))
+    }
   })
 }
 
@@ -231,14 +291,13 @@ function drawWind (g, polygons) {
     }
 
     if (mapParameters.render.wind.drawWindVectors) {
-
-      if(p.id % 2 == 0) {
+      if (p.id % 2 === 0) {
         return
       }
 
       let c = ObjectVector(p.data[0], p.data[1])
       let scalar = p.wind.velocity < 2 ? 0.5 : (1 / Math.log(p.wind.velocity) * 0.5)
-      let ep = c.clone().add(p.wind.force.clone().multiplyByScalar(scalar*3))
+      let ep = c.clone().add(p.wind.force.clone().multiplyByScalar(scalar * 3))
       let data = [{ x: c.getX(), y: c.getY() }, { x: ep.getX(), y: ep.getY() }]
 
       g.append('path').attr('d', path(data))
@@ -429,9 +488,10 @@ let tip = d3Tip()
       <tr><td>t (f)</td><td>${temperaturef}</td></tr>
       <tr><td>p (kPa)</td><td>${pressure}</td></tr>
       <tr><td>ws (m/s)</td><td>${windSpeed}</td></tr>
-      <tr><td>m (?)</td><td>${moisture}</td></tr>
+      <tr><td>m (cm)</td><td>${moisture}</td></tr>
       <tr><td>ah (g/m^3)</td><td>${absoluteHumidity}</td></tr>
       <tr><td>rh (%)</td><td>${relativeHumidity}</td></tr>
+      <tr><td>biome</td><td>${d.biome.name}</td></tr>
     </table>
     `
   })
@@ -459,7 +519,9 @@ export function draw (world) {
   let defs = svg.append('defs')
   markers(defs)
 
-  drawPolygons(g, world.terrain.polygons)
+  if (mapParameters.render.elevation.draw) {
+    drawElevation(g, world.terrain.polygons)
+  }
 
   if (mapParameters.render.temperature.draw) {
     drawTemperature(g, world.terrain.polygons)
@@ -479,6 +541,10 @@ export function draw (world) {
 
   if (mapParameters.render.wind.draw) {
     drawWind(g, world.terrain.polygons)
+  }
+
+  if (mapParameters.render.biome.draw) {
+    drawBiomes(g, world.terrain.polygons)
   }
 
   if (mapParameters.render.drawCoastline) {
@@ -501,7 +567,7 @@ export function draw (world) {
 
   svg.append('rect')
     .attr('fill', 'none')
-    .attr('pointer-events', 'all')
+    .attr('pointer-events', 'none')
     .attr('width', mapParameters.width)
     .attr('height', mapParameters.height)
     .call(d3.zoom().on('zoom', zoom))

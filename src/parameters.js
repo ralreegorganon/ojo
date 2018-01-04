@@ -43,18 +43,19 @@ export const mapParameters = {
     }
   },
   wind: {
-    tradeWindAngle: 270,
-    tradeWindVelocity: 15,
+    tradeWindAngle: 90,
+    tradeWindVelocity: 10,
     tradeWindInfluence: 0.5
   },
   render: {
     shapeRendering: 'crispEdges', // auto, optimizeSpeed, crispEdges, geometricPrecision
-    polygon: {
-      useStepInsteadOfElevation: false,
-      color: 'colorized' // greyscale, featureType, colorized
-    },
     drawCoastline: true,
     drawTriangles: false,
+    elevation: {
+      draw: true,
+      color: 'colorized', // greyscale, featureType, colorized
+      useStepInsteadOfElevation: false
+    },
     plates: {
       draw: false,
       drawForce: true
@@ -75,7 +76,11 @@ export const mapParameters = {
     },
     moisture: {
       draw: false,
+      drawAmount: false,
       type: 'moisture' // absoluteHumidity, relativeHumidity, moisture
+    },
+    biome: {
+      draw: false
     },
     drawSeed: true
   }

@@ -117,5 +117,5 @@ export function setTemperatures (terrain) {
   solarRadiation(terrain.polygons)
   smooth(terrain.polygons)
   elevation(terrain.polygons)
-  // normalize(terrain.polygons)
+  normalize(terrain.polygons)
 }
