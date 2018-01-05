@@ -19,8 +19,6 @@ export function doItToIt (parameters) {
   build(world)
   console.timeEnd('build')
 
-  console.log(world)
-
   console.time('draw')
   draw(world)
   console.timeEnd('draw')

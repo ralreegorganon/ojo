@@ -72,18 +72,9 @@ function setType (diagram, polygons) {
     }
     unmarked = polygons.filter(p => !p.featureType)
   }
-
-  let oceanpoly = groupBy(polygons.filter(p => p.featureType === 'Ocean'), p => p.featureIndex)
-  let landpoly = groupBy(polygons.filter(p => p.featureType === 'Land'), p => p.featureIndex)
-  let lakepoly = groupBy(polygons.filter(p => p.featureType === 'Lake'), p => p.featureIndex)
-
-  console.log({ oceanpoly, landpoly, lakepoly })
 }
 
 export function markRivers (polygons) {
-  let minMax = bounds(polygons, p => p.downhill === undefined ? 0 : p.downhill.flux)
-  console.log(minMax)
-
   polygons.map(function (p) {
     p.isRiver = p.featureType === 'Land' && p.downhill !== undefined && p.downhill.flux > 1000
   })

@@ -174,8 +174,6 @@ function propagate (diagram, polygons) {
               current.moisture += diff * 100
               current.absoluteHumidity -= diff
 
-              // console.log(`${current.id} dumping due to orographic lift: ${diff}   from: ${ce} to: ${ne} change: ${tempChange} ws: ${cws}`)
-            
               if (next.target !== undefined && next.target.elevation > ne) {
                 let tempChange = Math.pow((next.target.elevation - ne), 1) / 1000 * 0.03
                 let orographicLiftRh = relativeHumidity(current.absoluteHumidity, nt - tempChange)
@@ -183,8 +181,6 @@ function propagate (diagram, polygons) {
                   let diff = Math.min(current.absoluteHumidity, (orographicLiftRh - 1) * current.absoluteHumidity) / wf / 10
                   current.moisture += diff * 100
                   current.absoluteHumidity -= diff
-  
-                // console.log(`${current.id} dumping due to orographic lift: ${diff}   from: ${ce} to: ${ne} change: ${tempChange} ws: ${cws}`)
                 }
               }
             }
@@ -194,7 +190,6 @@ function propagate (diagram, polygons) {
             let diff = (crh - 1) * current.absoluteHumidity / wf
             current.moisture += diff * 100
             current.absoluteHumidity -= diff
-            // console.log(`${current.id} dumping due to 100% saturation: ${diff}`)
           }
 
           if (cft === 'Ocean' && nft !== 'Ocean') {
@@ -298,8 +293,6 @@ function propagate (diagram, polygons) {
               let diff = Math.min(current.absoluteHumidity, (orographicLiftRh - 1) * current.absoluteHumidity) / wf
               current.moisture += diff * 100
               current.absoluteHumidity -= diff
-
-              // console.log(`${current.id} dumping due to orographic lift: ${diff}   from: ${ce} to: ${ne} change: ${tempChange} ws: ${cws}`)
             }
 
             if (next.target !== undefined && next.target.elevation > ne) {
@@ -309,8 +302,6 @@ function propagate (diagram, polygons) {
                 let diff = Math.min(current.absoluteHumidity, (orographicLiftRh - 1) * current.absoluteHumidity) / wf / 10
                 current.moisture += diff * 100
                 current.absoluteHumidity -= diff
-
-              // console.log(`${current.id} dumping due to orographic lift: ${diff}   from: ${ce} to: ${ne} change: ${tempChange} ws: ${cws}`)
               }
             }
           }
@@ -319,8 +310,6 @@ function propagate (diagram, polygons) {
             let diff = (crh - 1) * current.absoluteHumidity / wf
             current.moisture += diff * 100
             current.absoluteHumidity -= diff
-
-            // console.log(`${current.id} dumping due to 100% saturation: ${diff}`)
           }
 
           if (cft === 'Ocean' && nft !== 'Ocean') {

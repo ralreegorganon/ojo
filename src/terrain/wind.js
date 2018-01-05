@@ -193,7 +193,6 @@ function propagate (diagram, polygons) {
     let min = minMax.min
 
     if (min > 0) {
-      console.log('broke after ' + i + ' iterations')
       break
     }
   }
@@ -231,8 +230,6 @@ function propagate (diagram, polygons) {
 
       let centerDistance = distanceFromPointToSegment(c.getX(), c.getY(), edge[0][0], edge[0][1], edge[1][0], edge[1][1], true)
       let forceDistance = distanceFromPointToSegment(ep.getX(), ep.getY(), edge[0][0], edge[0][1], edge[1][0], edge[1][1], true)
-
-      // console.log({from: p.id, to: other !== undefined ? other.id : undefined, cross, centerDistance, forceDistance})
 
       if (cross > crossMax && forceDistance < centerDistance) {
         to = other
