@@ -8,11 +8,17 @@ const puppeteer = require('puppeteer');
   await page.evaluate(() => {
     let p = {
       height: 1000,
-      width: 1000
+      width: 1000,
+      render: {
+        elevation: {
+          draw: true,
+          color: 'colorized'
+        }
+      }
     }
     ojo.doItToIt(p)
   })
-  await page.screenshot({path: 'output/00-baseline.png', fullPage: true, omitBackground: true})
+  await page.screenshot({path: 'output/00-elevation.png', fullPage: true, omitBackground: true})
 
   await page.goto('http://localhost:8080', { timeout: 300000 })
   await page.evaluate(() => {
@@ -53,6 +59,21 @@ const puppeteer = require('puppeteer');
       height: 1000,
       width: 1000,
       render: {
+        pressure: {
+          draw: true
+        }
+      }
+    }
+    ojo.doItToIt(p)
+  })
+  await page.screenshot({path: 'output/03-pressure.png', fullPage: true, omitBackground: true})
+
+  await page.goto('http://localhost:8080', { timeout: 300000 })
+  await page.evaluate(() => {
+    let p = {
+      height: 1000,
+      width: 1000,
+      render: {
         moisture: {
           draw: true,
           type: 'moisture' // absoluteHumidity, relativeHumidity, moisture
@@ -61,7 +82,7 @@ const puppeteer = require('puppeteer');
     }
     ojo.doItToIt(p)
   })
-  await page.screenshot({path: 'output/03-moisture.png', fullPage: true, omitBackground: true})
+  await page.screenshot({path: 'output/04-moisture.png', fullPage: true, omitBackground: true})
 
   await page.goto('http://localhost:8080', { timeout: 300000 })
   await page.evaluate(() => {
@@ -77,7 +98,7 @@ const puppeteer = require('puppeteer');
     }
     ojo.doItToIt(p)
   })
-  await page.screenshot({path: 'output/04-relativeHumidity.png', fullPage: true, omitBackground: true})
+  await page.screenshot({path: 'output/05-relativeHumidity.png', fullPage: true, omitBackground: true})
 
   await page.goto('http://localhost:8080', { timeout: 300000 })
   await page.evaluate(() => {
@@ -93,7 +114,7 @@ const puppeteer = require('puppeteer');
     }
     ojo.doItToIt(p)
   })
-  await page.screenshot({path: 'output/05-absoluteHumidity.png', fullPage: true, omitBackground: true})
+  await page.screenshot({path: 'output/06-absoluteHumidity.png', fullPage: true, omitBackground: true})
 
   await page.goto('http://localhost:8080', { timeout: 300000 })
   await page.evaluate(() => {
@@ -108,7 +129,7 @@ const puppeteer = require('puppeteer');
     }
     ojo.doItToIt(p)
   })
-  await page.screenshot({path: 'output/06-biome.png', fullPage: true, omitBackground: true})
+  await page.screenshot({path: 'output/07-biome.png', fullPage: true, omitBackground: true})
 
   await browser.close()
 })()

@@ -52,8 +52,8 @@ export const mapParameters = {
     drawCoastline: true,
     drawTriangles: false,
     elevation: {
-      draw: true,
-      color: 'colorized', // greyscale, featureType, colorized
+      draw: false,
+      color: 'colorized', // greyscale, featureType, colorized, greyscaleNoWater
       useStepInsteadOfElevation: false
     },
     plates: {
@@ -75,7 +75,7 @@ export const mapParameters = {
       draw: false
     },
     moisture: {
-      draw: false,
+      draw: true,
       drawAmount: false,
       type: 'moisture' // absoluteHumidity, relativeHumidity, moisture
     },

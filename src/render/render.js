@@ -125,14 +125,16 @@ function elevationFillColor (polygon) {
   switch (mapParameters.render.elevation.color) {
     case 'greyscale':
       return colorGrayscaleElevation(elevation)
+    case 'greyscaleNoWater':
+      if (elevation < mapParameters.seaLevel) {
+        return colorGrayscaleElevation(mapParameters.seaLevel)
+      } else {
+        return colorGrayscaleElevation(elevation)
+      }
     case 'featureType':
       return colorFeatureType(polygon)
     case 'colorized':
       if (elevation < mapParameters.seaLevel) {
-        if (polygon.featureType === 'Ocean' && temperatureInCelsius(polygon.temperature) <= 0) {
-          // return 'white'
-        }
-
         return colorLinearOcean(elevation)
       } else {
         return colorLinearLand(elevation)
@@ -227,6 +229,11 @@ function drawBiomes (g, polygons) {
         .attr('d', 'M' + i.join('L') + 'Z')
         .attr('id', d)
         .attr('fill', colorBiome(i.biome.name))
+    } else {
+      g.append('path')
+        .attr('d', 'M' + i.join('L') + 'Z')
+        .attr('id', d)
+        .attr('fill', elevationFillColor(i))
     }
   })
 }
@@ -471,7 +478,7 @@ let tip = d3Tip()
   .attr('class', 'd3-tip')
   .html(d => {
     let elevation = elevationInMetersAsl(d.elevation).toFixed(0)
-    let temperature = temperatureInCelsius(d.temperature)
+    let temperature = temperatureInCelsius(d.temperature).toFixed(1)
     let temperaturef = Math.round(temperature * 1.8 + 32)
     let pressure = d.pressure.toFixed(3)
     let windSpeed = d.wind.velocity.toFixed(3)
@@ -482,7 +489,6 @@ let tip = d3Tip()
     return `
     <table>
       <tr><td>id</td><td>${d.id}</td></tr>
-      <tr><td>e (m)</td><td>${d.elevation}</td></tr>
       <tr><td>e (m)</td><td>${elevation}</td></tr>
       <tr><td>t (c)</td><td>${temperature}</td></tr>
       <tr><td>t (f)</td><td>${temperaturef}</td></tr>
