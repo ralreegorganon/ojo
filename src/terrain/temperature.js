@@ -1,6 +1,7 @@
 import { mapParameters } from 'parameters'
 import { octavation } from 'terrain/noise'
 import { elevationInMetersAsl } from 'terrain/conversion'
+import { bounds } from 'utility/math'
 
 function baseline (polygons) {
   polygons.map(function (p) {
@@ -102,8 +103,9 @@ function smooth (polygons) {
 }
 
 function normalize (polygons) {
-  let min = Math.min(...polygons.map(p => p.temperature))
-  let max = Math.max(...polygons.map(p => p.temperature))
+  let minMax = bounds(polygons, p => p.temperature)
+  let min = minMax.min
+  let max = minMax.max
 
   polygons.map(function (p) {
     p.temperature = (p.temperature - min) / (max - min)

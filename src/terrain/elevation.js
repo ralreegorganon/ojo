@@ -1,11 +1,12 @@
 import { ObjectVector } from 'vector2d'
 import { mapParameters } from 'parameters'
 import { octavation } from 'terrain/noise'
+import { bounds } from 'utility/math'
 
 function elevationOctavation (x, y) {
-  return octavation(x, y, mapParameters.elevation.octavation.iterations, mapParameters.elevation.octavation.frequency, 
-    mapParameters.elevation.octavation.persistence, mapParameters.elevation.octavation.lacunarity, 
-    mapParameters.elevation.octavation.standardRatio, mapParameters.elevation.octavation.billowedRatio, 
+  return octavation(x, y, mapParameters.elevation.octavation.iterations, mapParameters.elevation.octavation.frequency,
+    mapParameters.elevation.octavation.persistence, mapParameters.elevation.octavation.lacunarity,
+    mapParameters.elevation.octavation.standardRatio, mapParameters.elevation.octavation.billowedRatio,
     mapParameters.elevation.octavation.ridgedRatio)
 }
 
@@ -25,8 +26,9 @@ function islandMask (x, y) {
 }
 
 function normalize (polygons) {
-  let min = Math.min(...polygons.map(p => p.elevation))
-  let max = Math.max(...polygons.map(p => p.elevation))
+  let minMax = bounds(polygons, p => p.elevation)
+  let min = minMax.min
+  let max = minMax.max
 
   polygons.map(function (p) {
     p.elevation = (p.elevation - min) / (max - min)

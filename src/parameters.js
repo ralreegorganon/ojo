@@ -78,12 +78,12 @@ export const mapParameters = {
       draw: false
     },
     moisture: {
-      draw: true,
+      draw: false,
       drawAmount: false,
       type: 'moisture' // absoluteHumidity, relativeHumidity, moisture
     },
     biome: {
-      draw: false
+      draw: true
     },
     drawSeed: true
   }

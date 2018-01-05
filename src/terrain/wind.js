@@ -1,6 +1,7 @@
 import { ObjectVector } from 'vector2d'
 import { mapParameters } from 'parameters'
 import { elevationInMetersAsl } from 'terrain/conversion'
+import { bounds } from 'utility/math'
 
 function baseline (polygons) {
   polygons.map(function (p) {
@@ -187,7 +188,9 @@ function propagate (diagram, polygons) {
       }
     })
 
-    let min = Math.min(...polygons.map(p => p.wind.force.magnitude()))
+    let magnitudes = polygons.map(p => p.wind.force.magnitude())
+    let minMax = bounds(magnitudes, p => p)
+    let min = minMax.min
 
     if (min > 0) {
       console.log('broke after ' + i + ' iterations')
