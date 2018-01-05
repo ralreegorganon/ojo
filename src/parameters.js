@@ -47,6 +47,9 @@ export const mapParameters = {
     tradeWindVelocity: 10,
     tradeWindInfluence: 0.5
   },
+  moisture: {
+    iterations: 10
+  },
   render: {
     shapeRendering: 'crispEdges', // auto, optimizeSpeed, crispEdges, geometricPrecision
     drawCoastline: true,

@@ -4,22 +4,27 @@ const puppeteer = require('puppeteer');
   const browser = await puppeteer.launch()
   const page = await browser.newPage()
 
-  await page.goto('http://localhost:8080', { timeout: 300000 })
-  await page.evaluate(() => {
-    let p = {
-      height: 1000,
-      width: 1000,
-      render: {
-        elevation: {
-          draw: true,
-          color: 'colorized'
+  for (let i = 1; i <= 10; i++) {
+    await page.goto('http://localhost:8080', { timeout: 300000 })
+    await page.evaluate((x) => {
+      let p = {
+        height: 500,
+        width: 500,
+        moisture: {
+          iterations: x
+        },
+        render: {
+          moisture: {
+            draw: true
+          }
         }
       }
-    }
-    ojo.doItToIt(p)
-  })
-  await page.screenshot({path: 'output/00-elevation.png', fullPage: true, omitBackground: true})
+      ojo.doItToIt(p)
+    }, i)
+    await page.screenshot({path: `output/${i}.png`, fullPage: true, omitBackground: true})
+  }
 
+  /*
   await page.goto('http://localhost:8080', { timeout: 300000 })
   await page.evaluate(() => {
     let p = {
@@ -130,6 +135,7 @@ const puppeteer = require('puppeteer');
     ojo.doItToIt(p)
   })
   await page.screenshot({path: 'output/07-biome.png', fullPage: true, omitBackground: true})
+  */
 
   await browser.close()
 })()

@@ -104,7 +104,7 @@ function propagate (diagram, polygons) {
     sinks.delete(p.wind.target)
   })
 
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < mapParameters.moisture.iterations; i++) {
     let visited1 = new Set()
     sinks.forEach(s => {
       if (s.featureType === 'Ocean') {
