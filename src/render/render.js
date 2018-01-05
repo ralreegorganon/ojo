@@ -156,6 +156,16 @@ function temperatureFillColor (polygon) {
 }
 
 function drawElevation (g, polygons) {
+  let x = d3.scaleLinear().domain([0, mapParameters.width]).range([0, mapParameters.width])
+  let y = d3.scaleLinear().domain([0, mapParameters.height]).range([0, mapParameters.height])
+  let path = d3.line()
+    .x(function (d) {
+      return x(d.x)
+    })
+    .y(function (d) {
+      return y(d.y)
+    })
+
   polygons.map(function (i, d) {
     g.attr('fill', 'white')
     g.append('path')
@@ -163,6 +173,19 @@ function drawElevation (g, polygons) {
       .attr('id', d)
       .attr('fill', elevationFillColor(i))
   })
+  if (mapParameters.render.elevation.drawDownhill) {
+    polygons.map(function (i, d) {
+      if (i.downhill.target !== undefined) {
+        let data = [{ x: i.data[0], y: i.data[1] }, { x: i.downhill.target.data[0], y: i.downhill.target.data[1] }]
+        g.append('path').attr('d', path(data))
+          .attr('stroke', 'red')
+          .attr('stroke-width', '0.2')
+          .attr('stroke-linejoin', 'round')
+          .attr('marker-start', 'url(#marker_stub)')
+          .attr('marker-end', 'url(#marker_arrow)')
+      }
+    })
+  }
 }
 
 function drawTemperature (g, polygons) {
@@ -234,6 +257,28 @@ function drawBiomes (g, polygons) {
         .attr('d', 'M' + i.join('L') + 'Z')
         .attr('id', d)
         .attr('fill', elevationFillColor(i))
+    }
+  })
+}
+
+function drawRivers (g, polygons) {
+  let x = d3.scaleLinear().domain([0, mapParameters.width]).range([0, mapParameters.width])
+  let y = d3.scaleLinear().domain([0, mapParameters.height]).range([0, mapParameters.height])
+  let path = d3.line()
+    .x(function (d) {
+      return x(d.x)
+    })
+    .y(function (d) {
+      return y(d.y)
+    })
+
+  polygons.map(function (i, d) {
+    if (i.isRiver) {
+      let data = [{ x: i.data[0], y: i.data[1] }, { x: i.downhill.target.data[0], y: i.downhill.target.data[1] }]
+      g.append('path').attr('d', path(data))
+        .attr('stroke', 'blue')
+        .attr('stroke-width', 0.5)
+        .attr('stroke-linejoin', 'round')
     }
   })
 }
@@ -485,6 +530,8 @@ let tip = d3Tip()
     let moisture = d.moisture.toFixed(3)
     let absoluteHumidity = d.absoluteHumidity.toFixed(3)
     let relativeHumidity = (d.relativeHumidity * 100).toFixed(0)
+    let downhillSlope = d.downhill.slope.toFixed(2)
+    let downhillFlux = d.downhill.flux.toFixed(2)
 
     return `
     <table>
@@ -498,6 +545,8 @@ let tip = d3Tip()
       <tr><td>ah (g/m^3)</td><td>${absoluteHumidity}</td></tr>
       <tr><td>rh (%)</td><td>${relativeHumidity}</td></tr>
       <tr><td>biome</td><td>${d.biome.name}</td></tr>
+      <tr><td>downhill slope</td><td>${downhillSlope}</td></tr>
+      <tr><td>downhill flux</td><td>${downhillFlux}</td></tr>
     </table>
     `
   })
@@ -553,6 +602,8 @@ export function draw (world) {
     drawBiomes(g, world.terrain.polygons)
   }
 
+  drawRivers(g, world.terrain.polygons)
+
   if (mapParameters.render.drawCoastline) {
     drawCoastline(g, world.terrain.polygons, world.terrain.diagram)
   }
@@ -573,7 +624,7 @@ export function draw (world) {
 
   svg.append('rect')
     .attr('fill', 'none')
-    .attr('pointer-events', 'none')
+    .attr('pointer-events', 'all')
     .attr('width', mapParameters.width)
     .attr('height', mapParameters.height)
     .call(d3.zoom().on('zoom', zoom))

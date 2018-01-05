@@ -1,5 +1,6 @@
 import { groupBy } from 'lodash'
 import { mapParameters } from 'parameters'
+import { bounds } from 'utility/math'
 
 function setType (diagram, polygons) {
   let queue = []
@@ -79,8 +80,18 @@ function setType (diagram, polygons) {
   console.log({ oceanpoly, landpoly, lakepoly })
 }
 
+export function markRivers (polygons) {
+  let minMax = bounds(polygons, p => p.downhill === undefined ? 0 : p.downhill.flux)
+  console.log(minMax)
+
+  polygons.map(function (p) {
+    p.isRiver = p.featureType === 'Land' && p.downhill !== undefined && p.downhill.flux > 1000
+  })
+}
+
 export function classifyTerrain (terrain) {
   console.time('setType')
   setType(terrain.diagram, terrain.polygons)
+  markRivers(terrain.polygons)
   console.timeEnd('setType')
 }

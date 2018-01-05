@@ -8,6 +8,7 @@ import { setWind } from 'terrain/wind'
 import { setPressures } from 'terrain/pressure'
 import { setMoisture } from 'terrain/moisture'
 import { setBiomes } from 'terrain/biome'
+import { doErosion } from 'terrain/erosion'
 
 function buildPoints (maxDistance) {
   let pds = new PoissonDiskSampling([mapParameters.width, mapParameters.height], maxDistance)
@@ -104,6 +105,14 @@ export function build (world) {
   console.time('setMoisture')
   setMoisture(world.terrain)
   console.timeEnd('setMoisture')
+
+  console.time('doErosion')
+  doErosion(world.terrain)
+  console.timeEnd('doErosion')
+
+  console.time('classifyTerrain')
+  classifyTerrain(world.terrain)
+  console.timeEnd('classifyTerrain')
 
   console.time('setBiomes')
   setBiomes(world.terrain)

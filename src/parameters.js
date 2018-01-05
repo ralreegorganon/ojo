@@ -3,8 +3,8 @@ import SimplexNoise from 'simplex-noise'
 
 export const mapParameters = {
   pdsMaxDistance: 4,
-  width: 700,
-  height: 700,
+  width: 500,
+  height: 500,
   // seed: 1514489481526,
   // seed: 1514632505452,
   seed: 1514877216912,
@@ -50,14 +50,22 @@ export const mapParameters = {
   moisture: {
     iterations: 10
   },
+  erosion: {
+    apply: false,
+    riverFactor: 100,
+    creepFactor: 100,
+    maxErosionRate: 50,
+    defaultErosionAmount: 0.1
+  },
   render: {
     shapeRendering: 'crispEdges', // auto, optimizeSpeed, crispEdges, geometricPrecision
     drawCoastline: true,
     drawTriangles: false,
     elevation: {
-      draw: false,
+      draw: true,
       color: 'colorized', // greyscale, featureType, colorized, greyscaleNoWater
-      useStepInsteadOfElevation: false
+      useStepInsteadOfElevation: false,
+      drawDownhill: false
     },
     plates: {
       draw: false,
@@ -83,7 +91,7 @@ export const mapParameters = {
       type: 'moisture' // absoluteHumidity, relativeHumidity, moisture
     },
     biome: {
-      draw: true
+      draw: false
     },
     drawSeed: true
   }

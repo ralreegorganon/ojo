@@ -12,3 +12,7 @@ export function bounds (arr, idx) {
   })
   return { max: max, min: min }
 }
+
+export function randomRange (low, high) {
+  return low + Math.random() * (high - low)
+}
