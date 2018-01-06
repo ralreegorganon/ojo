@@ -2,19 +2,24 @@ import { mapParameters } from 'parameters'
 import octavation from 'terrain/noise'
 import { elevationInMetersAsl } from 'terrain/conversion'
 import { bounds } from 'utility/math'
+import memoize from 'fast-memoize'
 
 function declination(day) {
   return 23.45 * Math.sin(Math.PI * 360 / 365 / 180 * (day + 284))
 }
 
+const memoizedDeclination = memoize(declination)
+
 function hourAngle(hour) {
   return 360 / 24 * (hour - 12)
 }
 
+const memoizedHourAngle = memoize(hourAngle)
+
 function zenith(latitude, day, hour) {
   const l = latitude * Math.PI / 180
-  const d = declination(day) * Math.PI / 180
-  const h = hourAngle(hour) * Math.PI / 180
+  const d = memoizedDeclination(day) * Math.PI / 180
+  const h = memoizedHourAngle(hour) * Math.PI / 180
   const z = Math.acos(Math.sin(l) * Math.sin(d) + Math.cos(l) * Math.cos(d) * Math.cos(h))
 
   return z
@@ -89,25 +94,27 @@ function normalize(polygons) {
 }
 
 function baseline(polygons) {
+  const averageAnnualSolarInsolation = new Map()
+  for (let l = -90; l <= 90; l++) {
+    let annual = 0
+    for (let d = 1; d <= 365; d++) {
+      let daily = 0
+      for (let h = 0; h < 24; h++) {
+        daily += Math.max(solarInsolation(l, d, h), 0)
+      }
+      annual += daily
+    }
+    annual /= 365
+    averageAnnualSolarInsolation.set(l, annual)
+  }
+
   polygons.forEach((p) => {
     p.temperature = 0.5
     p.radientTemperature = 0
     p.elevationTemperature = 0
 
-    const latitude = (1 - p.data[1]) / mapParameters.height * 180 + 90
-
-    let annual = 0
-    for (let d = 1; d <= 365; d++) {
-      let daily = 0
-      for (let h = 0; h < 24; h++) {
-        daily += Math.max(solarInsolation(latitude, d, h), 0)
-      }
-      annual += daily
-    }
-
-    annual /= 365
-
-    p.solarInsolation = annual
+    const latitude = Math.min(90, Math.max(0, Math.round((1 - p.data[1]) / mapParameters.height * 180 + 90)))
+    p.solarInsolation = averageAnnualSolarInsolation.get(latitude)
   })
 }
 
