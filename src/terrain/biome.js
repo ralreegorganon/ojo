@@ -1,5 +1,7 @@
 import { temperatureInCelsius } from 'terrain/conversion'
 
+/* eslint-disable object-curly-newline */
+
 const biomes = [
   { name: 'polar desert', minT: 0, maxT: 1.5, minP: 0, maxP: 1600 },
 
@@ -45,24 +47,24 @@ const biomes = [
   { name: 'tropical moist forest', minT: 24, maxT: 30, minP: 200, maxP: 400 },
   { name: 'tropical wet forest', minT: 24, maxT: 30, minP: 400, maxP: 800 },
   { name: 'tropical rain forest', minT: 24, maxT: 30, minP: 800, maxP: 1600 }
-
 ]
+/* eslint-enable object-curly-newline */
 
-function lifezone (temperature, precipitation) {
-  let t = Math.max(0, Math.min(30, temperature))
-  let p = Math.max(0, Math.min(1600, precipitation))
+function lifezone(temperature, precipitation) {
+  const t = Math.max(0, Math.min(30, temperature))
+  const p = Math.max(0, Math.min(1600, precipitation))
 
-  let biome = biomes.filter(b => t >= b.minT && t <= b.maxT && p >= b.minP && p <= b.maxP)
+  const biome = biomes.filter(b => t >= b.minT && t <= b.maxT && p >= b.minP && p <= b.maxP)
 
   return biome[0]
 }
 
-function baseline (polygons) {
-  polygons.map(function (p) {
+function baseline(polygons) {
+  polygons.forEach((p) => {
     p.biome = lifezone(temperatureInCelsius(p.temperature), p.moisture)
   })
 }
 
-export function setBiomes (terrain) {
+export default function setBiomes(terrain) {
   baseline(terrain.polygons)
 }

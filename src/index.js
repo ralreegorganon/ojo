@@ -1,32 +1,24 @@
-import { draw } from 'render/render'
-import { build } from 'terrain/terrain'
+import draw from 'render/render'
+import build from 'terrain/terrain'
 import { mapParameters } from 'parameters'
 import { saveSvgAsPng } from 'save-svg-as-png'
 import { merge } from 'lodash'
 
-export function doItToIt (parameters) {
-  let originalParameters = merge({}, mapParameters)
+export default function doItToIt(parameters) {
+  const originalParameters = merge({}, mapParameters)
 
   if (parameters !== undefined) {
     merge(mapParameters, parameters)
   }
 
-  let world = { terrain: null }
+  const world = { terrain: null }
 
-  console.time('generate map')
-
-  console.time('build')
   build(world)
-  console.timeEnd('build')
 
-  console.time('draw')
   draw(world)
-  console.timeEnd('draw')
-
-  console.timeEnd('generate map')
 
   if (mapParameters.exportPng) {
-    saveSvgAsPng(document.getElementById('derp'), mapParameters.seed + '.png')
+    saveSvgAsPng(document.getElementById('derp'), `${mapParameters.seed}.png`)
   }
 
   if (parameters !== undefined) {
@@ -34,6 +26,7 @@ export function doItToIt (parameters) {
   }
 }
 
+console.profile()
 doItToIt()
-
+console.profileEnd()
 // require('expose-loader?ojo!index.js')

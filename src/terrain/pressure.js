@@ -1,11 +1,11 @@
 import { elevationInMetersAsl } from 'terrain/conversion'
 
-function baseline (polygons) {
-  polygons.map(function (p) {
+function baseline(polygons) {
+  polygons.forEach((p) => {
     p.pressure = 101.325 * Math.exp(-0.00012 * elevationInMetersAsl(p.elevation))
   })
 }
 
-export function setPressures (terrain) {
+export default function setPressures(terrain) {
   baseline(terrain.polygons)
 }

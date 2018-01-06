@@ -1,12 +1,10 @@
-import { groupBy } from 'lodash'
 import { mapParameters } from 'parameters'
-import { bounds } from 'utility/math'
 
-function setType (diagram, polygons) {
-  let queue = []
-  let used = new Set()
+function setType(diagram, polygons) {
+  const queue = []
+  const used = new Set()
 
-  let startIndex = diagram.find(0, 0).index
+  const startIndex = diagram.find(0, 0).index
   let start = polygons[startIndex]
   queue.push(start)
   used.add(start)
@@ -15,9 +13,9 @@ function setType (diagram, polygons) {
   start.featureType = type
   start.featureIndex = 0
   while (queue.length > 0) {
-    let p = queue[0]
+    const p = queue[0]
     queue.shift()
-    p.neighbors.forEach(function (n) {
+    p.neighbors.forEach((n) => {
       if (!used.has(n) && n.elevation < mapParameters.seaLevel) {
         n.featureType = type
         n.featureIndex = 0
@@ -41,13 +39,13 @@ function setType (diagram, polygons) {
       greater = mapParameters.seaLevel
       less = 100
       featureIndex = landIndex
-      landIndex++
+      landIndex += 1
     } else {
       type = 'Lake'
       greater = -100
       less = mapParameters.seaLevel
       featureIndex = lakeIndex
-      lakeIndex++
+      lakeIndex += 1
     }
 
     start = unmarked[0]
@@ -56,12 +54,12 @@ function setType (diagram, polygons) {
     queue.push(start)
     used.add(start)
     while (queue.length > 0) {
-      let p = queue[0]
+      const p = queue[0]
       queue.shift()
-      p.neighbors.forEach(function (n) {
-        let alreadyProcessed = used.has(n)
-        let elevationAboveMin = n.elevation >= greater
-        let elevationBelowMax = n.elevation < less
+      p.neighbors.forEach((n) => {
+        const alreadyProcessed = used.has(n)
+        const elevationAboveMin = n.elevation >= greater
+        const elevationBelowMax = n.elevation < less
         if (!alreadyProcessed && elevationAboveMin && elevationBelowMax) {
           n.featureType = type
           n.featureIndex = featureIndex
@@ -74,15 +72,13 @@ function setType (diagram, polygons) {
   }
 }
 
-export function markRivers (polygons) {
-  polygons.map(function (p) {
+export function markRivers(polygons) {
+  polygons.forEach((p) => {
     p.isRiver = p.featureType === 'Land' && p.downhill !== undefined && p.downhill.flux > 1000
   })
 }
 
-export function classifyTerrain (terrain) {
-  console.time('setType')
+export function classifyTerrain(terrain) {
   setType(terrain.diagram, terrain.polygons)
   markRivers(terrain.polygons)
-  console.timeEnd('setType')
 }

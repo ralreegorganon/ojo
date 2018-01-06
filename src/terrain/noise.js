@@ -1,14 +1,14 @@
 import { mapParameters, simplex } from 'parameters'
 
-function billowedNoise (x, y) {
+function billowedNoise(x, y) {
   return Math.abs(simplex.noise2D(x, y))
 }
 
-function ridgedNoise (x, y) {
+function ridgedNoise(x, y) {
   return 1 - Math.abs(simplex.noise2D(x, y))
 }
 
-export function octavation (x, y, iterations, frequency, persistence, lacunarity, standardRatio, billowedRatio, ridgedRatio) {
+export default function octavation(x, y, iterations, frequency, persistence, lacunarity, standardRatio, billowedRatio, ridgedRatio) {
   x /= mapParameters.width
   y /= mapParameters.height
 
@@ -16,11 +16,11 @@ export function octavation (x, y, iterations, frequency, persistence, lacunarity
   let noise = 0
 
   for (let i = 0; i < iterations; i++) {
-    let sn = simplex.noise2D(frequency * x, frequency * y)
-    let bn = billowedNoise(frequency * x, frequency * y)
-    let rn = ridgedNoise(frequency * x, frequency * y)
+    const sn = simplex.noise2D(frequency * x, frequency * y)
+    const bn = billowedNoise(frequency * x, frequency * y)
+    const rn = ridgedNoise(frequency * x, frequency * y)
 
-    let n = sn * standardRatio + bn * billowedRatio + rn * ridgedRatio
+    const n = sn * standardRatio + bn * billowedRatio + rn * ridgedRatio
 
     noise += n * amplitude
     amplitude *= persistence

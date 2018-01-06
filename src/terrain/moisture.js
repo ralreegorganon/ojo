@@ -1,29 +1,80 @@
 import { mapParameters } from 'parameters'
 import { elevationInMetersAsl, temperatureInCelsius } from 'terrain/conversion'
 
-function baseline (polygons) {
-  // absoluteHumidity
+// pressure in kPa, temperature in C, returns density of water vapor in air (g/m^3)
+function vaporPressureToAbsoluteHumidty(pressure, temperature) {
+  const p = pressure * 1000
+  const t = temperature + 273.15
+  const d = 2.16679 * p / t
+  return d
+}
 
-  polygons.map(function (p) {
-    let t = temperatureInCelsius(p.temperature)
-    let saturationVaporPressure = buckEquation(t)
+// density of water vapor in air (g/m^3), temperature in C, returns pressure in kPa
+function absoluteHumidtyToVaporPressure(density, temperature) {
+  const d = density
+  const t = temperature + 273.15
+  const p = d * t / 2.16679 / 1000
+  return p
+}
+
+// temperature in C, returns vapor pressure in kPa
+function buckEquationOverLiquidWater(temperature) {
+  // https://en.wikipedia.org/wiki/Arden_Buck_equation
+  const saturationVaporPressure = 0.61121 * Math.exp((18.678 - temperature / 234.5) * (temperature / (257.14 + temperature)))
+  return saturationVaporPressure
+}
+
+// temperature in C, returns vapor pressure in kPa
+function buckEquationOverIce(temperature) {
+  // https://en.wikipedia.org/wiki/Arden_Buck_equation
+  const saturationVaporPressure = 0.61115 * Math.exp((23.036 - temperature / 333.7) * (temperature / (279.82 + temperature)))
+  return saturationVaporPressure
+}
+
+function buckEquation(temperature) {
+  const saturationVaporPressure = temperature > 0 ? buckEquationOverLiquidWater(temperature) : buckEquationOverIce(temperature)
+  return saturationVaporPressure
+}
+
+function relativeHumidity(absoluteHumidity, temperature) {
+  const saturationVaporPressure = buckEquation(temperature)
+  const actualVaporPressure = absoluteHumidtyToVaporPressure(absoluteHumidity, temperature)
+  return actualVaporPressure / saturationVaporPressure
+}
+
+// mm / day
+// http://edis.ifas.ufl.edu/pdffiles/ae/ae45900.pdf
+function evaporationRate(temperature, pressure, solarInsolation, windSpeed, saturationVaporPressure, actualVaporPressure) {
+  const g = 0.082
+  const r = solarInsolation * 3.6
+  const t = temperature
+  const u2 = windSpeed
+  const es = saturationVaporPressure
+  const ea = actualVaporPressure
+  const psychrometric = 0.000665 * pressure
+  const slope = 4098 * (0.6108 * Math.exp(17.27 * t / (t + 237.3))) / (t + 237.3) ** 2
+  const er = (0.408 * slope * (r - g) + psychrometric * (900 / (t + 273)) * u2 * (es - ea)) / (slope + psychrometric * (1 + 0.34 * u2))
+  return er
+}
+
+function baseline(polygons) {
+  polygons.forEach((p) => {
+    const t = temperatureInCelsius(p.temperature)
+    const saturationVaporPressure = buckEquation(t)
 
     if (p.featureType === 'Ocean' || p.featureType === 'Lake') {
       p.moisture = 400
-      // relative humidity over ocean is 0.8
       p.relativeHumidity = 0.8
 
-      let actualVaporPressure = p.relativeHumidity * saturationVaporPressure
-      let absoluteHumidity = vaporPressureToAbsoluteHumidty(actualVaporPressure, t)
+      const actualVaporPressure = p.relativeHumidity * saturationVaporPressure
+      const absoluteHumidity = vaporPressureToAbsoluteHumidty(actualVaporPressure, t)
       p.absoluteHumidity = absoluteHumidity
     } else {
       p.moisture = 0
-      // let local sources provide 0.25
       p.relativeHumidity = 0
-      // p.relativeHumidity = 0
 
-      let actualVaporPressure = p.relativeHumidity * saturationVaporPressure
-      let absoluteHumidity = vaporPressureToAbsoluteHumidty(actualVaporPressure, t)
+      const actualVaporPressure = p.relativeHumidity * saturationVaporPressure
+      const absoluteHumidity = vaporPressureToAbsoluteHumidty(actualVaporPressure, t)
       p.absoluteHumidity = absoluteHumidity
     }
 
@@ -31,82 +82,38 @@ function baseline (polygons) {
   })
 }
 
-// pressure in kPa, temperature in C, returns density of water vapor in air (g/m^3)
-function vaporPressureToAbsoluteHumidty (pressure, temperature) {
-  let p = pressure * 1000
-  let t = temperature + 273.15
-  let d = 2.16679 * p / t
-  return d
+function smooth(polygons) {
+  polygons.forEach((p) => {
+    if (p.featureType === 'Ocean') {
+      return
+    }
+
+    let averageMoisture = p.moisture
+    let c = 1
+    p.neighbors.forEach((n) => {
+      if (n.featureType !== 'Ocean') {
+        averageMoisture += n.moisture
+        c += 1
+      }
+    })
+    averageMoisture /= c
+    p.moisture = averageMoisture
+  })
 }
 
-// density of water vapor in air (g/m^3), temperature in C, returns pressure in kPa
-function absoluteHumidtyToVaporPressure (density, temperature) {
-  let d = density
-  let t = temperature + 273.15
-  let p = d * t / 2.16679 / 1000
-  return p
-}
-
-// temperature in C, returns vapor pressure in kPa
-function buckEquationOverLiquidWater (temperature) {
-  // https://en.wikipedia.org/wiki/Arden_Buck_equation
-  let saturationVaporPressure = 0.61121 * Math.exp((18.678 - (temperature / 234.5)) * (temperature / (257.14 + temperature)))
-  return saturationVaporPressure
-}
-
-// temperature in C, returns vapor pressure in kPa
-function buckEquationOverIce (temperature) {
-  // https://en.wikipedia.org/wiki/Arden_Buck_equation
-  let saturationVaporPressure = 0.61115 * Math.exp((23.036 - (temperature / 333.7)) * (temperature / (279.82 + temperature)))
-  return saturationVaporPressure
-}
-
-function buckEquation (temperature) {
-  let saturationVaporPressure = temperature > 0 ? buckEquationOverLiquidWater(temperature) : buckEquationOverIce(temperature)
-  return saturationVaporPressure
-}
-
-function buckEquationOverLiquidWaterDeriveTemperature (saturationVaporPressure) {
-  let x = Math.ln(saturationVaporPressure / 0.61121)
-  let t = (-4379.991 + 234.5 * x + Math.sqrt(54990.25 * Math.pow(x, 2) - 2295413.099 * x + 19184321.16008)) / -2
-  return t
-}
-
-function relativeHumidity (absoluteHumidity, temperature) {
-  let saturationVaporPressure = buckEquation(temperature)
-  let actualVaporPressure = absoluteHumidtyToVaporPressure(absoluteHumidity, temperature)
-  let relativeHumidity = actualVaporPressure / saturationVaporPressure
-  return relativeHumidity
-}
-
-// mm / day
-// http://edis.ifas.ufl.edu/pdffiles/ae/ae45900.pdf
-function evaporationRate (temperature, pressure, solarInsolation, windSpeed, saturationVaporPressure, actualVaporPressure) {
-  let g = 0.082
-  let r = solarInsolation * 3.6
-  let t = temperature
-  let u2 = windSpeed
-  let es = saturationVaporPressure
-  let ea = actualVaporPressure
-  let psychrometric = 0.000665 * pressure
-  let slope = 4098 * (0.6108 * Math.exp((17.27 * t) / (t + 237.3))) / Math.pow((t + 237.3), 2)
-  let er = (0.408 * slope * (r - g) + psychrometric * (900 / (t + 273)) * u2 * (es - ea)) / (slope + psychrometric * (1 + 0.34 * u2))
-  return er
-}
-
-function propagate (diagram, polygons) {
-  let sinks = new Set()
-  polygons.map(function (p) {
+function propagate(diagram, polygons) {
+  const sinks = new Set()
+  polygons.forEach((p) => {
     sinks.add(p)
   })
 
-  polygons.map(function (p) {
+  polygons.forEach((p) => {
     sinks.delete(p.wind.target)
   })
 
   for (let i = 0; i < mapParameters.moisture.iterations; i++) {
-    let visited1 = new Set()
-    sinks.forEach(s => {
+    const visited1 = new Set()
+    sinks.forEach((s) => {
       if (s.featureType === 'Ocean') {
         let current = s
         let next = current.wind.target
@@ -118,89 +125,69 @@ function propagate (diagram, polygons) {
           if (current.featureType === 'Ocean') {
             current.moisture = 400
             current.relativeHumidity = 0.8
-            let t = temperatureInCelsius(current.temperature)
-            let saturationVaporPressure = buckEquation(t)
-            let actualVaporPressure = current.relativeHumidity * saturationVaporPressure
-            let absoluteHumidity = vaporPressureToAbsoluteHumidty(actualVaporPressure, t)
+            const t = temperatureInCelsius(current.temperature)
+            const saturationVaporPressure = buckEquation(t)
+            const actualVaporPressure = current.relativeHumidity * saturationVaporPressure
+            const absoluteHumidity = vaporPressureToAbsoluteHumidty(actualVaporPressure, t)
             current.absoluteHumidity = absoluteHumidity
           }
 
-          let cft = current.featureType
-          let nft = next.featureType
+          const ce = elevationInMetersAsl(current.elevation)
+          const ne = elevationInMetersAsl(next.elevation)
 
-          let cws = current.wind.velocity
-          let nws = next.wind.velocity
+          const ct = temperatureInCelsius(current.temperature)
+          const nt = temperatureInCelsius(next.temperature)
 
-          let deltaws = next.wind.velocity / current.wind.velocity
+          const csvp = buckEquation(ct)
 
-          let ce = elevationInMetersAsl(current.elevation)
-          let ne = elevationInMetersAsl(next.elevation)
+          const cavp = absoluteHumidtyToVaporPressure(current.absoluteHumidity, ct)
 
-          let ct = temperatureInCelsius(current.temperature)
-          let nt = temperatureInCelsius(next.temperature)
+          const crh = cavp / csvp
 
-          let cah = current.absoluteHumidity
-          let nah = next.absoluteHumidity
+          const wf = Math.max(2, current.wind.velocity)
 
-          let csvp = buckEquation(ct)
-          let nsvp = buckEquation(nt)
+          const er = evaporationRate(ct, current.pressure, current.solarInsolation, current.wind.velocity, csvp, cavp)
 
-          let cavp = absoluteHumidtyToVaporPressure(cah, ct)
-          let navp = absoluteHumidtyToVaporPressure(nah, nt)
-
-          let crh = cavp / csvp
-          let nrh = navp / nsvp
-
-          let cp = current.pressure
-          let np = next.pressure
-
-          let cr = current.solarInsolation
-          let nr = next.solarInsolation
-
-          let wf = Math.max(2, cws)
-
-          let er = evaporationRate(ct, cp, cr, cws, csvp, cavp)
-
-          let possibleEr = Math.min(current.moisture, er)
+          const possibleEr = Math.min(current.moisture, er)
 
           current.moisture = Math.max(0, current.moisture - possibleEr)
           current.absoluteHumidity += possibleEr / 100
 
           if (ne > ce) {
-            let tempChange = Math.pow((ne - ce), 1) / 1000 * 0.03
-            let orographicLiftRh = relativeHumidity(current.absoluteHumidity, ct - tempChange)
+            const tempChange = (ne - ce) ** 1 / 1000 * 0.03
+            const orographicLiftRh = relativeHumidity(current.absoluteHumidity, ct - tempChange)
             if (orographicLiftRh > 1) {
-              let diff = Math.min(current.absoluteHumidity, (orographicLiftRh - 1) * current.absoluteHumidity) / wf
+              const diff = Math.min(current.absoluteHumidity, (orographicLiftRh - 1) * current.absoluteHumidity) / wf
               current.moisture += diff * 100
               current.absoluteHumidity -= diff
 
               if (next.target !== undefined && next.target.elevation > ne) {
-                let tempChange = Math.pow((next.target.elevation - ne), 1) / 1000 * 0.03
-                let orographicLiftRh = relativeHumidity(current.absoluteHumidity, nt - tempChange)
-                if (orographicLiftRh > 1) {
-                  let diff = Math.min(current.absoluteHumidity, (orographicLiftRh - 1) * current.absoluteHumidity) / wf / 10
-                  current.moisture += diff * 100
-                  current.absoluteHumidity -= diff
+                const nTempChange = (next.target.elevation - ne) ** 1 / 1000 * 0.03
+                const nOrographicLiftRh = relativeHumidity(current.absoluteHumidity, nt - nTempChange)
+                if (nOrographicLiftRh > 1) {
+                  const nDiff = Math.min(current.absoluteHumidity, (nOrographicLiftRh - 1) * current.absoluteHumidity) / wf / 10
+                  current.moisture += nDiff * 100
+                  current.absoluteHumidity -= nDiff
                 }
               }
             }
           }
 
           if (crh > 1) {
-            let diff = (crh - 1) * current.absoluteHumidity / wf
+            const diff = (crh - 1) * current.absoluteHumidity / wf
             current.moisture += diff * 100
             current.absoluteHumidity -= diff
           }
 
-          if (cft === 'Ocean' && nft !== 'Ocean') {
-            let diff = Math.min(current.absoluteHumidity, 2 * Math.random())
+          if (current.featureType === 'Ocean' && next.featureType !== 'Ocean') {
+            const diff = Math.min(current.absoluteHumidity, 2 * Math.random())
             next.moisture += diff * 100
             current.absoluteHumidity -= diff
           }
 
-          let random = Math.random()
-          if (cft === 'Land' && random < 0.2 && current.absoluteHumidity > 0) {
-            let diff = current.absoluteHumidity * random / wf
+          const random = Math.random()
+          if (current.featureType === 'Land' && random < 0.2 && current.absoluteHumidity > 0) {
+            const diff = current.absoluteHumidity * random / wf
             current.moisture += diff * 100
             current.absoluteHumidity -= diff
           }
@@ -217,19 +204,19 @@ function propagate (diagram, polygons) {
 
     smooth(polygons)
 
-    let visited2 = new Set()
-    sinks.forEach(s => {
+    const visited2 = new Set()
+    sinks.forEach((s) => {
       if (s.featureType !== 'Ocean') {
         let current = s
         let next = current.wind.target
 
         let averageAbsoluteHumidity = 0
-        current.neighbors.forEach(function (n) {
+        current.neighbors.forEach((n) => {
           if (next !== n) {
             averageAbsoluteHumidity += n.absoluteHumidity
           }
         })
-        averageAbsoluteHumidity /= (current.neighbors.length)
+        averageAbsoluteHumidity /= current.neighbors.length
         current.absoluteHumidity = averageAbsoluteHumidity
 
         while (next !== undefined) {
@@ -240,87 +227,69 @@ function propagate (diagram, polygons) {
           if (current.featureType === 'Ocean') {
             current.moisture = 400
             current.relativeHumidity = 0.8
-            let t = temperatureInCelsius(current.temperature)
-            let saturationVaporPressure = buckEquation(t)
-            let actualVaporPressure = current.relativeHumidity * saturationVaporPressure
-            let absoluteHumidity = vaporPressureToAbsoluteHumidty(actualVaporPressure, t)
+            const t = temperatureInCelsius(current.temperature)
+            const saturationVaporPressure = buckEquation(t)
+            const actualVaporPressure = current.relativeHumidity * saturationVaporPressure
+            const absoluteHumidity = vaporPressureToAbsoluteHumidty(actualVaporPressure, t)
             current.absoluteHumidity = absoluteHumidity
           }
 
-          let cft = current.featureType
-          let nft = next.featureType
+          const ce = elevationInMetersAsl(current.elevation)
+          const ne = elevationInMetersAsl(next.elevation)
 
-          let cws = current.wind.velocity
-          let nws = next.wind.velocity
+          const ct = temperatureInCelsius(current.temperature)
+          const nt = temperatureInCelsius(next.temperature)
 
-          let ce = elevationInMetersAsl(current.elevation)
-          let ne = elevationInMetersAsl(next.elevation)
+          const csvp = buckEquation(ct)
 
-          let ct = temperatureInCelsius(current.temperature)
-          let nt = temperatureInCelsius(next.temperature)
+          const cavp = absoluteHumidtyToVaporPressure(current.absoluteHumidity, ct)
 
-          let cah = current.absoluteHumidity
-          let nah = next.absoluteHumidity
+          const crh = cavp / csvp
 
-          let csvp = buckEquation(ct)
-          let nsvp = buckEquation(nt)
+          const wf = Math.max(2, current.wind.velocity)
 
-          let cavp = absoluteHumidtyToVaporPressure(cah, ct)
-          let navp = absoluteHumidtyToVaporPressure(nah, nt)
+          const er = evaporationRate(ct, current.pressure, current.solarInsolation, current.wind.velocity, csvp, cavp)
 
-          let crh = cavp / csvp
-          let nrh = navp / nsvp
-
-          let cp = current.pressure
-          let np = next.pressure
-
-          let cr = current.solarInsolation
-          let nr = next.solarInsolation
-
-          let wf = Math.max(2, cws)
-
-          let er = evaporationRate(ct, cp, cr, cws, csvp, cavp)
-
-          let possibleEr = Math.min(current.moisture, er)
+          const possibleEr = Math.min(current.moisture, er)
 
           current.moisture = Math.max(0, current.moisture - possibleEr)
           current.absoluteHumidity += possibleEr / 100
 
           if (ne > ce) {
-            let tempChange = Math.pow((ne - ce), 1) / 1000 * 0.03
-            let orographicLiftRh = relativeHumidity(current.absoluteHumidity, ct - tempChange)
+            const tempChange = (ne - ce) ** 1 / 1000 * 0.03
+            const orographicLiftRh = relativeHumidity(current.absoluteHumidity, ct - tempChange)
             if (orographicLiftRh > 1) {
-              let diff = Math.min(current.absoluteHumidity, (orographicLiftRh - 1) * current.absoluteHumidity) / wf
+              const diff = Math.min(current.absoluteHumidity, (orographicLiftRh - 1) * current.absoluteHumidity) / wf
               current.moisture += diff * 100
               current.absoluteHumidity -= diff
             }
 
             if (next.target !== undefined && next.target.elevation > ne) {
-              let tempChange = Math.pow((next.target.elevation - ne), 1) / 1000 * 0.03
-              let orographicLiftRh = relativeHumidity(current.absoluteHumidity, nt - tempChange)
-              if (orographicLiftRh > 1) {
-                let diff = Math.min(current.absoluteHumidity, (orographicLiftRh - 1) * current.absoluteHumidity) / wf / 10
-                current.moisture += diff * 100
-                current.absoluteHumidity -= diff
+              const nTempChange = (next.target.elevation - ne) ** 1 / 1000 * 0.03
+              const nOrographicLiftRh = relativeHumidity(current.absoluteHumidity, nt - nTempChange)
+              if (nOrographicLiftRh > 1) {
+                const nDiff = Math.min(current.absoluteHumidity, (nOrographicLiftRh - 1) * current.absoluteHumidity) / wf / 10
+                current.moisture += nDiff * 100
+                current.absoluteHumidity -= nDiff
               }
             }
           }
 
           if (crh > 1) {
-            let diff = (crh - 1) * current.absoluteHumidity / wf
+            const diff = (crh - 1) * current.absoluteHumidity / wf
             current.moisture += diff * 100
             current.absoluteHumidity -= diff
           }
 
-          if (cft === 'Ocean' && nft !== 'Ocean') {
-            let diff = Math.min(current.absoluteHumidity, 2 * Math.random())
+          if (current.featureType === 'Ocean' && next.featureType !== 'Ocean') {
+            const diff = Math.min(current.absoluteHumidity, 2 * Math.random())
             next.moisture += diff * 100
             current.absoluteHumidity -= diff
           }
 
-          let random = Math.random()
-          if (cft === 'Land' && random < 0.2 && current.absoluteHumidity > 0) {
-            let diff = current.absoluteHumidity * random / wf
+          const random = Math.random()
+          if (current.featureType === 'Land' && random < 0.2 && current.absoluteHumidity > 0) {
+            const diff = current.absoluteHumidity * random / wf
             current.moisture += diff * 100
             current.absoluteHumidity -= diff
           }
@@ -338,25 +307,6 @@ function propagate (diagram, polygons) {
 
     smooth(polygons)
   }
-}
-
-function smooth (polygons) {
-  polygons.map(function (p) {
-    if (p.featureType === 'Ocean') {
-      return
-    }
-
-    let averageMoisture = p.moisture
-    let c = 1
-    p.neighbors.forEach(function (n) {
-      if (n.featureType !== 'Ocean') {
-        averageMoisture += n.moisture
-        c++
-      }
-    })
-    averageMoisture /= c
-    p.moisture = averageMoisture
-  })
 }
 
 /*
@@ -473,7 +423,7 @@ function smooth2 (polygons) {
 }
 */
 
-export function setMoisture (terrain) {
+export default function setMoisture(terrain) {
   baseline(terrain.polygons)
   propagate(terrain.diagram, terrain.polygons)
 }

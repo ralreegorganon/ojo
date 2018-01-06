@@ -1,8 +1,37 @@
 {
   "parser": "babel-eslint",
   "extends": [
-    "standard"
+    "airbnb-base"
   ],
+  "rules": {
+    "semi": ["error", "never"],
+    "comma-dangle": ["error", {
+      "arrays": "never",
+      "objects": "never",
+      "imports": "never",
+      "exports": "never",
+      "functions": "never"
+    }],
+    "no-mixed-operators": ["error", {
+      "groups": [
+        ["==", "!=", "===", "!==", ">", ">=", "<", "<="],
+        ["&&", "||"],
+        ["in", "instanceof"]
+      ],
+      "allowSamePrecedence": true
+    }],
+    "import/no-extraneous-dependencies" : "off",
+    "no-plusplus": ["error", { "allowForLoopAfterthoughts": true }],
+    "no-param-reassign": "off",
+    "max-len": "off"
+  },
+  "settings" : {
+    "import/resolver": {
+      "webpack": {
+        "config": "webpack.config.js"
+      }
+    }
+  },
   "env": {
     "browser": true
   }

@@ -1,50 +1,20 @@
-const puppeteer = require('puppeteer');
+const puppeteer = require('puppeteer')
 
-(async () => {
-  const browser = await puppeteer.launch()
-  const page = await browser.newPage()
-
-  for (let i = 1; i <= 10; i++) {
-    await page.goto('http://localhost:8080', { timeout: 300000 })
-    await page.evaluate((x) => {
-      let p = {
-        height: 500,
-        width: 500,
-        moisture: {
-          iterations: x
-        },
-        render: {
-          moisture: {
-            draw: true
-          }
-        }
-      }
-      ojo.doItToIt(p)
-    }, i)
-    await page.screenshot({path: `output/${i}.png`, fullPage: true, omitBackground: true})
-  }
-
-  /*
-  await page.goto('http://localhost:8080', { timeout: 300000 })
-  await page.evaluate(() => {
-    let p = {
-      height: 1000,
-      width: 1000,
+const renderings = [
+  {
+    name: 'elevation',
+    config: {
       render: {
-        temperature: {
-          draw: true
+        elevation: {
+          draw: true,
+          color: 'colorized'
         }
       }
     }
-    ojo.doItToIt(p)
-  })
-  await page.screenshot({path: 'output/01-temperature.png', fullPage: true, omitBackground: true})
-
-  await page.goto('http://localhost:8080', { timeout: 300000 })
-  await page.evaluate(() => {
-    let p = {
-      height: 1000,
-      width: 1000,
+  },
+  {
+    name: 'wind',
+    config: {
       render: {
         wind: {
           draw: true,
@@ -54,30 +24,21 @@ const puppeteer = require('puppeteer');
         }
       }
     }
-    ojo.doItToIt(p)
-  })
-  await page.screenshot({path: 'output/02-wind.png', fullPage: true, omitBackground: true})
+  },
 
-  await page.goto('http://localhost:8080', { timeout: 300000 })
-  await page.evaluate(() => {
-    let p = {
-      height: 1000,
-      width: 1000,
+  {
+    name: 'pressure',
+    config: {
       render: {
         pressure: {
           draw: true
         }
       }
     }
-    ojo.doItToIt(p)
-  })
-  await page.screenshot({path: 'output/03-pressure.png', fullPage: true, omitBackground: true})
-
-  await page.goto('http://localhost:8080', { timeout: 300000 })
-  await page.evaluate(() => {
-    let p = {
-      height: 1000,
-      width: 1000,
+  },
+  {
+    name: 'moisture',
+    config: {
       render: {
         moisture: {
           draw: true,
@@ -85,15 +46,10 @@ const puppeteer = require('puppeteer');
         }
       }
     }
-    ojo.doItToIt(p)
-  })
-  await page.screenshot({path: 'output/04-moisture.png', fullPage: true, omitBackground: true})
-
-  await page.goto('http://localhost:8080', { timeout: 300000 })
-  await page.evaluate(() => {
-    let p = {
-      height: 1000,
-      width: 1000,
+  },
+  {
+    name: 'relateiveHumidity',
+    config: {
       render: {
         moisture: {
           draw: true,
@@ -101,15 +57,10 @@ const puppeteer = require('puppeteer');
         }
       }
     }
-    ojo.doItToIt(p)
-  })
-  await page.screenshot({path: 'output/05-relativeHumidity.png', fullPage: true, omitBackground: true})
-
-  await page.goto('http://localhost:8080', { timeout: 300000 })
-  await page.evaluate(() => {
-    let p = {
-      height: 1000,
-      width: 1000,
+  },
+  {
+    name: 'absoluteHumidity',
+    config: {
       render: {
         moisture: {
           draw: true,
@@ -117,25 +68,39 @@ const puppeteer = require('puppeteer');
         }
       }
     }
-    ojo.doItToIt(p)
-  })
-  await page.screenshot({path: 'output/06-absoluteHumidity.png', fullPage: true, omitBackground: true})
-
-  await page.goto('http://localhost:8080', { timeout: 300000 })
-  await page.evaluate(() => {
-    let p = {
-      height: 1000,
-      width: 1000,
+  },
+  {
+    name: 'biome',
+    config: {
       render: {
         biome: {
           draw: true
         }
       }
     }
-    ojo.doItToIt(p)
-  })
-  await page.screenshot({path: 'output/07-biome.png', fullPage: true, omitBackground: true})
-  */
+  }
+]
 
-  await browser.close()
-})()
+renderings.forEach((r) => {
+  r.config.width = 100
+  r.config.height = 100
+})
+
+puppeteer.launch().then(async (browser) => {
+  const promises = []
+  renderings.forEach((r) => {
+    promises.push(browser.newPage().then(async (page) => {
+      await page.goto('http://localhost:8080', { timeout: 300000 })
+      await page.evaluate((config) => {
+        ojo.doItToIt(config)
+      }, r.config)
+      await page.screenshot({
+        path: `output/${r.name}.png`,
+        fullPage: true,
+        omitBackground: true
+      })
+    }))
+  })
+  await Promise.all(promises)
+  browser.close()
+})
