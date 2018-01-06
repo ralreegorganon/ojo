@@ -109,12 +109,18 @@ function baseline(polygons) {
   }
 
   polygons.forEach((p) => {
-    p.temperature = 0.5
+    p.temperature = 0
     p.radientTemperature = 0
     p.elevationTemperature = 0
 
-    const latitude = Math.min(90, Math.max(0, Math.round((1 - p.data[1]) / mapParameters.height * 180 + 90)))
+    const latitude = Math.min(90, Math.max(0, Math.round(p.latitude)))
     p.solarInsolation = averageAnnualSolarInsolation.get(latitude)
+  })
+}
+
+function globalModifier(polygons) {
+  polygons.forEach((p) => {
+    p.temperature = Math.max(Math.min(p.temperature + mapParameters.temperature.globalModifier, 1), 0)
   })
 }
 
@@ -124,4 +130,5 @@ export default function setTemperatures(terrain) {
   smooth(terrain.polygons)
   elevation(terrain.polygons)
   normalize(terrain.polygons)
+  globalModifier(terrain.polygons)
 }

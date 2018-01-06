@@ -23,7 +23,8 @@
     "import/no-extraneous-dependencies" : "off",
     "no-plusplus": ["error", { "allowForLoopAfterthoughts": true }],
     "no-param-reassign": "off",
-    "max-len": "off"
+    "max-len": "off",
+    "linebreak-style": "off"
   },
   "settings" : {
     "import/resolver": {

@@ -734,7 +734,7 @@ export default function draw(world) {
   svg
     .append('rect')
     .attr('fill', 'none')
-    .attr('pointer-events', 'all')
+    .attr('pointer-events', 'none')
     .attr('width', mapParameters.width)
     .attr('height', mapParameters.height)
     .call(d3.zoom().on('zoom', () => {

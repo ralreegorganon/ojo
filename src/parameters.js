@@ -3,12 +3,12 @@ import SimplexNoise from 'simplex-noise'
 
 export const mapParameters = {
   pdsMaxDistance: 4,
-  width: 500,
-  height: 500,
+  width: 700,
+  height: 700,
   // seed: 1514489481526,
   // seed: 1514632505452,
-  seed: 1514877216912,
-  // seed: '1337',
+  // seed: 1514877216912,
+  seed: '1337',
   // seed: new Date().getTime(),
   exportPng: false,
   seaLevel: 0.2,
@@ -43,9 +43,53 @@ export const mapParameters = {
     }
   },
   wind: {
-    tradeWindAngle: 90,
-    tradeWindVelocity: 10,
-    tradeWindInfluence: 0.5
+    maxIterations: 500,
+    sourceSet: 'mapEdge', // mapEdge, ocean, all
+    northernPolarEasterlies: {
+      startLatitude: 60,
+      endLatitude: 90,
+      angle: 270,
+      velocity: 5,
+      influence: 0.5
+    },
+    northernWesterlies: {
+      startLatitude: 30,
+      endLatitude: 60,
+      angle: 80,
+      velocity: 15,
+      influence: 0.5
+    },
+    northernTradeWinds: {
+      startLatitude: 0,
+      endLatitude: 30,
+      angle: 225,
+      velocity: 10,
+      influence: 1
+    },
+    southernTradeWinds: {
+      startLatitude: -30,
+      endLatitude: 0,
+      angle: 315,
+      velocity: 10,
+      influence: 1
+    },
+    southernWesterlies: {
+      startLatitude: -60,
+      endLatitude: -30,
+      angle: 100,
+      velocity: 15,
+      influence: 0.5
+    },
+    southernPolarEasterlies: {
+      startLatitude: -90,
+      endLatitude: -60,
+      angle: 90,
+      velocity: 5,
+      influence: 0.5
+    }
+  },
+  temperature: {
+    globalModifier: 0.0 // 0.01 = 1C
   },
   moisture: {
     iterations: 10
@@ -78,9 +122,9 @@ export const mapParameters = {
     },
     wind: {
       draw: false,
-      drawWindNetwork: false,
+      drawWindNetwork: true,
       drawWindVectors: true,
-      drawWindVelocity: false
+      drawWindVelocity: true
     },
     pressure: {
       draw: false

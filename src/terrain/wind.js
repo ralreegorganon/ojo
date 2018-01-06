@@ -30,13 +30,7 @@ function windForceScalar(from, to) {
   return elevationVariation * friction
 }
 
-function propagate(diagram, polygons) {
-  const rads = mapParameters.wind.tradeWindAngle * Math.PI / 180
-  const trade = ObjectVector(0, 0)
-    .subtract(ObjectVector(-Math.sin(rads), Math.cos(rads)))
-    .unit()
-    .multiplyByScalar(mapParameters.wind.tradeWindVelocity)
-
+function getMapEdgeSet(diagram, polygons) {
   const mapEdges = new Set()
   for (let i = 0; i < mapParameters.height; i++) {
     const left = polygons[diagram.find(0, i).index]
@@ -60,61 +54,164 @@ function propagate(diagram, polygons) {
       mapEdges.add(bottom)
     }
   }
+  return mapEdges
+}
 
-  for (let i = 0; i < 500; i++) {
+function getOceanSet(polygons) {
+  return new Set(polygons.filter(f => f.featureType === 'Ocean'))
+}
+
+function getAllSet(polygons) {
+  return new Set(polygons)
+}
+
+function pickSourceSet(diagram, polygons) {
+  switch (mapParameters.wind.sourceSet) {
+    case 'mapEdge':
+      return getMapEdgeSet(diagram, polygons)
+    case 'ocean':
+      return getOceanSet(polygons)
+    case 'all':
+      return getAllSet(polygons)
+    default:
+      return getAllSet(polygons)
+  }
+}
+
+function getForwardEdges(diagram, polygons, p, cell) {
+  const forceUnit = p.wind.force.clone().unit()
+
+  const forwardEdges = []
+
+  cell.halfedges.forEach((e) => {
+    const edge = diagram.edges[e]
+    const edgeVectors = cell.edgeVectors.get(e)
+
+    let other
+    if (edge.left === undefined) {
+      const rp = polygons[edge.right.index]
+      other = rp === p ? undefined : rp
+    } else if (edge.right === undefined) {
+      const lp = polygons[edge.left.index]
+      other = lp === p ? undefined : lp
+    } else {
+      const lp = polygons[edge.left.index]
+      const rp = polygons[edge.right.index]
+      other = lp === p ? rp : lp
+    }
+
+    const cross = Math.abs(forceUnit.cross(edgeVectors.edgeVector))
+
+    if (other !== undefined && cross > 0) {
+      const ep = edgeVectors.centerVector.clone().add(forceUnit)
+      const forceDistance = distanceFromPointToSegment(ep.getX(), ep.getY(), edge[0][0], edge[0][1], edge[1][0], edge[1][1], true)
+
+      if (forceDistance < edgeVectors.centerToEdgeDistance) {
+        forwardEdges.push({ polygon: other, direction: edgeVectors.centerToEdgeVector })
+      }
+    }
+  })
+
+  return forwardEdges
+}
+
+function updateForceFromIncoming(polygons, incoming, windConstants) {
+  polygons.forEach((p) => {
+    const force = ObjectVector(0, 0)
+
+    const inc = incoming.get(p)
+
+    if (inc.length > 0) {
+      const max = Math.max(...inc.map(z => z.magnitude()))
+
+      inc.forEach((f) => {
+        force.add(f)
+      })
+
+      let wc
+      if (p.latitude > windConstants.northernPolarEasterlies.startLatitude && p.latitude <= windConstants.northernPolarEasterlies.endLatitude) {
+        wc = windConstants.northernPolarEasterlies
+      } else if (p.latitude > windConstants.northernWesterlies.startLatitude && p.latitude <= windConstants.northernWesterlies.endLatitude) {
+        wc = windConstants.northernWesterlies
+      } else if (p.latitude > windConstants.northernTradeWinds.startLatitude && p.latitude <= windConstants.northernTradeWinds.endLatitude) {
+        wc = windConstants.northernTradeWinds
+      } else if (p.latitude > windConstants.southernTradeWinds.startLatitude && p.latitude <= windConstants.southernTradeWinds.endLatitude) {
+        wc = windConstants.southernTradeWinds
+      } else if (p.latitude > windConstants.southernWesterlies.startLatitude && p.latitude <= windConstants.southernWesterlies.endLatitude) {
+        wc = windConstants.southernWesterlies
+      } else if (p.latitude >= windConstants.southernPolarEasterlies.startLatitude && p.latitude <= windConstants.southernPolarEasterlies.endLatitude) {
+        wc = windConstants.southernPolarEasterlies
+      }
+
+      force.add(wc.vectorScaled)
+
+      const newForce = force.normalize().multiplyByScalar(max)
+
+      p.wind.force = newForce
+    }
+  })
+}
+
+function buildWindFromConstant(wc) {
+  const rads = wc.angle * Math.PI / 180
+  const vector = ObjectVector(0, 0).subtract(ObjectVector(-Math.sin(rads), Math.cos(rads))).unit().multiplyByScalar(wc.velocity)
+  const vectorScaled = vector.clone().unit().multiplyByScalar(wc.velocity * wc.influence)
+
+  return {
+    startLatitude: wc.startLatitude,
+    endLatitude: wc.endLatitude,
+    vector,
+    vectorScaled
+  }
+}
+
+function globalWindConstants() {
+  return {
+    northernPolarEasterlies: buildWindFromConstant(mapParameters.wind.northernPolarEasterlies),
+    northernWesterlies: buildWindFromConstant(mapParameters.wind.northernWesterlies),
+    northernTradeWinds: buildWindFromConstant(mapParameters.wind.northernTradeWinds),
+    southernTradeWinds: buildWindFromConstant(mapParameters.wind.southernTradeWinds),
+    southernWesterlies: buildWindFromConstant(mapParameters.wind.southernWesterlies),
+    southernPolarEasterlies: buildWindFromConstant(mapParameters.wind.southernPolarEasterlies)
+  }
+}
+
+function flow(diagram, polygons) {
+  const mapEdges = pickSourceSet(diagram, polygons)
+  const windConstants = globalWindConstants()
+
+  for (let i = 0; i < mapParameters.wind.maxIterations; i++) {
     const incoming = new Map()
+
     polygons.forEach((p) => {
       incoming.set(p, [])
     })
 
     mapEdges.forEach((p) => {
-      p.wind.force = trade.clone()
-      incoming.get(p).push(trade.clone())
+      let wc
+      if (p.latitude > windConstants.northernPolarEasterlies.startLatitude && p.latitude <= windConstants.northernPolarEasterlies.endLatitude) {
+        wc = windConstants.northernPolarEasterlies
+      } else if (p.latitude > windConstants.northernWesterlies.startLatitude && p.latitude <= windConstants.northernWesterlies.endLatitude) {
+        wc = windConstants.northernWesterlies
+      } else if (p.latitude > windConstants.northernTradeWinds.startLatitude && p.latitude <= windConstants.northernTradeWinds.endLatitude) {
+        wc = windConstants.northernTradeWinds
+      } else if (p.latitude > windConstants.southernTradeWinds.startLatitude && p.latitude <= windConstants.southernTradeWinds.endLatitude) {
+        wc = windConstants.southernTradeWinds
+      } else if (p.latitude > windConstants.southernWesterlies.startLatitude && p.latitude <= windConstants.southernWesterlies.endLatitude) {
+        wc = windConstants.southernWesterlies
+      } else if (p.latitude >= windConstants.southernPolarEasterlies.startLatitude && p.latitude <= windConstants.southernPolarEasterlies.endLatitude) {
+        wc = windConstants.southernPolarEasterlies
+      }
+
+      p.wind.force = wc.vector.clone()
+      incoming.get(p).push(wc.vector.clone())
     })
 
-    /* */
-    // console.time("complex")
     for (let j = 0; j < polygons.length; j++) {
       const p = polygons[j]
-
-      const forwardEdges = []
       const cell = diagram.cells[j]
-      cell.halfedges.forEach((e) => {
-        const edge = diagram.edges[e]
-        const edgeVector = ObjectVector(edge[0][0], edge[0][1]).subtract(ObjectVector(edge[1][0], edge[1][1]))
-        edgeVector.normalize()
 
-        const cross = Math.abs(p.wind.force
-          .clone()
-          .unit()
-          .cross(edgeVector.clone().unit()))
-
-        let other
-        if (edge.left === undefined) {
-          const rp = polygons[edge.right.index]
-          other = rp === p ? undefined : rp
-        } else if (edge.right === undefined) {
-          const lp = polygons[edge.left.index]
-          other = lp === p ? undefined : lp
-        } else {
-          const lp = polygons[edge.left.index]
-          const rp = polygons[edge.right.index]
-          other = lp === p ? rp : lp
-        }
-
-        const c = ObjectVector(p.data[0], p.data[1])
-        const ep = c.clone().add(p.wind.force.clone().unit())
-
-        const centerDistance = distanceFromPointToSegment(c.getX(), c.getY(), edge[0][0], edge[0][1], edge[1][0], edge[1][1], true)
-        const forceDistance = distanceFromPointToSegment(ep.getX(), ep.getY(), edge[0][0], edge[0][1], edge[1][0], edge[1][1], true)
-
-        if (cross > 0 && forceDistance < centerDistance && other !== undefined) {
-          const direction = ObjectVector((edge[0][0] + edge[1][0]) / 2, (edge[0][1] + edge[1][1]) / 2)
-            .subtract(ObjectVector(p.data[0], p.data[1]))
-            .unit()
-          forwardEdges.push({ polygon: other, direction })
-        }
-      })
+      const forwardEdges = getForwardEdges(diagram, polygons, p, cell)
 
       forwardEdges.forEach((fe) => {
         let scalar = windForceScalar(p, fe.polygon)
@@ -125,62 +222,8 @@ function propagate(diagram, polygons) {
         incoming.get(fe.polygon).push(force)
       })
     }
-    // console.timeEnd("complex")
 
-    /**/
-
-    /* good but not quite since fuckery with dots
-    console.time("simple")
-    polygons.map(function (p) {
-      let forwardEdges = []
-      p.neighbors.forEach(function (n) {
-        let direction = ObjectVector(n.data[0], n.data[1]).subtract(ObjectVector(p.data[0], p.data[1])).unit()
-        let dot = direction.dot(p.wind.force.clone().unit())
-        if (dot > 0) {
-          forwardEdges.push({polygon: n, direction, dot})
-        }
-      })
-
-      let m = p.wind.force.magnitude()
-
-      forwardEdges.map(function (fe) {
-        let forces = incoming.get(fe.polygon)
-        let scalar = m
-
-        let delta = Math.max(fe.polygon.elevation, mapParameters.seaLevel) - Math.max(p.elevation, mapParameters.seaLevel)
-
-        scalar *= Math.pow((1 - delta), 4)
-
-        let force = fe.direction.clone().multiplyByScalar(scalar)
-        forces.push(force)
-      })
-    })
-    console.timeEnd("simple")
-    */
-
-    polygons.forEach((p) => {
-      const force = ObjectVector(0, 0)
-
-      const inc = incoming.get(p)
-
-      if (inc.length > 0) {
-        const max = Math.max(...inc.map(z => z.magnitude()))
-
-        inc.forEach((f) => {
-          force.add(f)
-        })
-
-        force.add(trade
-          .clone()
-          .unit()
-          .multiplyByScalar(mapParameters.wind.tradeWindVelocity * mapParameters.wind.tradeWindInfluence))
-
-        const newForce = force.normalize().multiplyByScalar(max)
-        // let newForce = trade.clone()
-
-        p.wind.force = newForce
-      }
-    })
+    updateForceFromIncoming(polygons, incoming, windConstants)
 
     const magnitudes = polygons.map(p => p.wind.force.magnitude())
     const { min } = bounds(magnitudes, p => p)
@@ -189,10 +232,13 @@ function propagate(diagram, polygons) {
       break
     }
   }
+}
 
+function setTarget(diagram, polygons) {
   for (let i = 0; i < polygons.length; i++) {
     const p = polygons[i]
     p.wind.velocity = p.wind.force.magnitude()
+    const forceUnit = p.wind.force.clone().unit()
 
     let crossMax = 0
     let to = p
@@ -200,13 +246,9 @@ function propagate(diagram, polygons) {
     const cell = diagram.cells[i]
     cell.halfedges.forEach((e) => {
       const edge = diagram.edges[e]
-      const edgeVector = ObjectVector(edge[0][0], edge[0][1]).subtract(ObjectVector(edge[1][0], edge[1][1]))
-      edgeVector.normalize()
+      const edgeVectors = cell.edgeVectors.get(e)
 
-      const cross = Math.abs(p.wind.force
-        .clone()
-        .unit()
-        .cross(edgeVector.clone().unit()))
+      const cross = Math.abs(forceUnit.cross(edgeVectors.edgeVector))
 
       let other
       if (edge.left === undefined) {
@@ -221,13 +263,10 @@ function propagate(diagram, polygons) {
         other = lp === p ? rp : lp
       }
 
-      const c = ObjectVector(p.data[0], p.data[1])
-      const ep = c.clone().add(p.wind.force.clone().unit())
-
-      const centerDistance = distanceFromPointToSegment(c.getX(), c.getY(), edge[0][0], edge[0][1], edge[1][0], edge[1][1], true)
+      const ep = edgeVectors.centerVector.clone().add(forceUnit)
       const forceDistance = distanceFromPointToSegment(ep.getX(), ep.getY(), edge[0][0], edge[0][1], edge[1][0], edge[1][1], true)
 
-      if (cross > crossMax && forceDistance < centerDistance) {
+      if (cross > crossMax && forceDistance < edgeVectors.centerToEdgeDistance) {
         to = other
         crossMax = cross
       }
@@ -237,29 +276,42 @@ function propagate(diagram, polygons) {
       p.wind.target = to
     }
   }
+}
 
-  /*
-  polygons.map(function (p) {
-    p.wind.velocity = p.wind.force.magnitude()
+function propagate(diagram, polygons) {
+  console.time('blah')
+  flow(diagram, polygons)
+  console.timeEnd('blah')
+  setTarget(diagram, polygons)
+}
 
-    let dotMax = 0
-    let to = p
-    p.neighbors.forEach(function (n) {
-      let direction = ObjectVector(n.data[0], n.data[1]).subtract(ObjectVector(p.data[0], p.data[1])).unit()
-      let dot = direction.dot(p.wind.force.clone().unit())
-      if (dot > dotMax) {
-        to = n
-      }
+function precalculateCellVectors(diagram, polygons) {
+  polygons.forEach((p, i) => {
+    const cell = diagram.cells[i]
+    cell.edgeVectors = new Map()
+
+    cell.halfedges.forEach((e) => {
+      const edge = diagram.edges[e]
+
+      const edgeVector = ObjectVector(edge[0][0], edge[0][1]).subtract(ObjectVector(edge[1][0], edge[1][1]))
+      edgeVector.unit()
+
+      const centerVector = ObjectVector(p.data[0], p.data[1])
+      const centerToEdgeDistance = distanceFromPointToSegment(centerVector.getX(), centerVector.getY(), edge[0][0], edge[0][1], edge[1][0], edge[1][1], true)
+
+      const centerToEdgeVector = ObjectVector((edge[0][0] + edge[1][0]) / 2, (edge[0][1] + edge[1][1]) / 2)
+        .subtract(ObjectVector(p.data[0], p.data[1]))
+        .unit()
+
+      cell.edgeVectors.set(e, {
+        edgeVector, centerVector, centerToEdgeDistance, centerToEdgeVector
+      })
     })
-
-    if (to !== p) {
-      p.wind.target = to
-    }
   })
-  */
 }
 
 export default function setWind(terrain) {
+  precalculateCellVectors(terrain.diagram, terrain.polygons)
   baseline(terrain.polygons)
   propagate(terrain.diagram, terrain.polygons)
 }

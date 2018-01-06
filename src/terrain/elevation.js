@@ -51,6 +51,7 @@ function octavate(polygons) {
 function baseline(polygons) {
   polygons.forEach((p) => {
     p.elevation = 0.0
+    p.latitude = (1 - p.data[1]) / mapParameters.height * 180 + 90
   })
 }
 
