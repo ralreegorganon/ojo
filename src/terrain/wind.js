@@ -115,7 +115,7 @@ function getForwardEdges(diagram, polygons, p, cell) {
   return forwardEdges
 }
 
-function updateForceFromIncoming(polygons, incoming, windConstants) {
+function updateForceFromIncoming(polygons, incoming, windConstants, consider) {
   polygons.forEach((p) => {
     const force = ObjectVector(0, 0)
 
@@ -148,6 +148,10 @@ function updateForceFromIncoming(polygons, incoming, windConstants) {
       const newForce = force.normalize().multiplyByScalar(max)
 
       p.wind.force = newForce
+
+      if (!consider.has(p)) {
+        consider.add(p)
+      }
     }
   })
 }
@@ -180,6 +184,8 @@ function flow(diagram, polygons) {
   const mapEdges = pickSourceSet(diagram, polygons)
   const windConstants = globalWindConstants()
 
+  const consider = new Set(mapEdges)
+
   for (let i = 0; i < mapParameters.wind.maxIterations; i++) {
     const incoming = new Map()
 
@@ -207,9 +213,8 @@ function flow(diagram, polygons) {
       incoming.get(p).push(wc.vector.clone())
     })
 
-    for (let j = 0; j < polygons.length; j++) {
-      const p = polygons[j]
-      const cell = diagram.cells[j]
+    consider.forEach((p) => {
+      const cell = diagram.cells[p.id]
 
       const forwardEdges = getForwardEdges(diagram, polygons, p, cell)
 
@@ -221,9 +226,9 @@ function flow(diagram, polygons) {
         const force = fe.direction.clone().multiplyByScalar(scalar)
         incoming.get(fe.polygon).push(force)
       })
-    }
+    })
 
-    updateForceFromIncoming(polygons, incoming, windConstants)
+    updateForceFromIncoming(polygons, incoming, windConstants, consider)
 
     const magnitudes = polygons.map(p => p.wind.force.magnitude())
     const { min } = bounds(magnitudes, p => p)
