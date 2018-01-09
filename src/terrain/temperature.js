@@ -1,4 +1,4 @@
-import { mapParameters } from 'parameters'
+import mapParameters from 'parameters'
 import octavation from 'terrain/noise'
 import { elevationInMetersAsl } from 'terrain/conversion'
 import { bounds } from 'utility/math'

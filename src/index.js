@@ -1,15 +1,20 @@
 import draw from 'render/render'
 import build from 'terrain/terrain'
-import { mapParameters } from 'parameters'
+import mapParameters from 'parameters'
 import { saveSvgAsPng } from 'save-svg-as-png'
 import { merge } from 'lodash'
+import seedrandom from 'seedrandom'
+import SimplexNoise from 'simplex-noise'
 
-export default function doItToIt(parameters) {
+export function doItToIt(parameters) {
   const originalParameters = merge({}, mapParameters)
 
   if (parameters !== undefined) {
     merge(mapParameters, parameters)
   }
+
+  seedrandom(mapParameters.seed, { global: true })
+  mapParameters.simplex = new SimplexNoise(Math.random)
 
   const world = { terrain: null }
 
@@ -26,7 +31,7 @@ export default function doItToIt(parameters) {
   }
 }
 
-console.profile()
+// console.profile()
 doItToIt()
-console.profileEnd()
+// console.profileEnd()
 // require('expose-loader?ojo!index.js')

@@ -1,6 +1,6 @@
 import * as d3 from 'd3'
 import PoissonDiskSampling from 'poisson-disk-sampling'
-import { mapParameters } from 'parameters'
+import mapParameters from 'parameters'
 import setElevations from 'terrain/elevation'
 import { classifyTerrain } from 'terrain/classify'
 import setTemperatures from 'terrain/temperature'

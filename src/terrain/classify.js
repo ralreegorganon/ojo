@@ -1,4 +1,4 @@
-import { mapParameters } from 'parameters'
+import mapParameters from 'parameters'
 
 function setType(diagram, polygons) {
   const queue = []

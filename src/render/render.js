@@ -1,7 +1,7 @@
 import * as d3 from 'd3'
 import { interpolateSpectral, interpolateBlues } from 'd3-scale-chromatic'
 import d3Tip from 'd3-tip'
-import { mapParameters } from 'parameters'
+import mapParameters from 'parameters'
 import { ObjectVector } from 'vector2d'
 import { elevationInMetersAsl, temperatureInCelsius } from 'terrain/conversion'
 
@@ -372,7 +372,8 @@ function drawPlates(g, polygons) {
       const ep = c.clone().add(p.force.clone())
       const data = [{ x: c.getX(), y: c.getY() }, { x: ep.getX(), y: ep.getY() }]
 
-      g.append('path')
+      g
+        .append('path')
         .attr('d', path(data))
         .attr('stroke', 'red')
         .attr('stroke-width', '1')
@@ -710,7 +711,9 @@ export default function draw(world) {
     drawBiomes(g, world.terrain.polygons)
   }
 
-  drawRivers(g, world.terrain.polygons)
+  if (mapParameters.render.rivers.draw) {
+    drawRivers(g, world.terrain.polygons)
+  }
 
   if (mapParameters.render.drawCoastline) {
     drawCoastline(g, world.terrain.polygons, world.terrain.diagram)
@@ -740,6 +743,13 @@ export default function draw(world) {
     .call(d3.zoom().on('zoom', () => {
       g.attr('transform', d3.event.transform)
     }))
+
+  svg
+    .append('text')
+    .attr('x', '0')
+    .attr('y', mapParameters.height - 10)
+    .attr('dy', '.35em')
+    .text(mapParameters.annotation)
 
   svg.call(tip)
 }

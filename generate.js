@@ -1,6 +1,8 @@
 const puppeteer = require('puppeteer')
+const PromisePool = require('es6-promise-pool')
 
-const renderings = [
+/*
+const frames = [
   {
     name: 'elevation',
     config: {
@@ -80,27 +82,149 @@ const renderings = [
     }
   }
 ]
+*/
+
+/*
+const frames = [
+  {
+    name: '00-elevation',
+    config: {
+      render: {
+        elevation: {
+          draw: true,
+          color: 'colorized'
+        },
+        rivers: {
+          draw: true
+        },
+        coastline: {
+          draw: true
+        }
+      }
+    }
+  },
+  {
+    name: '01-wind',
+    config: {
+      render: {
+        elevation: {
+          draw: true,
+          color: 'colorized'
+        },
+        rivers: {
+          draw: true
+        },
+        coastline: {
+          draw: true
+        },
+        wind: {
+          draw: true,
+          drawWindNetwork: false,
+          drawWindVectors: true,
+          drawWindVelocity: false
+        }
+      }
+    }
+  },
+  {
+    name: '02-moisture',
+    config: {
+      render: {
+        moisture: {
+          draw: true,
+          type: 'moisture' // absoluteHumidity, relativeHumidity, moisture
+        },
+        rivers: {
+          draw: true
+        },
+        coastline: {
+          draw: true
+        }
+      }
+    }
+  },
+  {
+    name: '03-biome',
+    config: {
+      render: {
+        biome: {
+          draw: true
+        },
+        rivers: {
+          draw: true
+        },
+        coastline: {
+          draw: true
+        }
+      }
+    }
+  }
+]
+*/
+
+const frames = [
+  {
+    name: 'terrain',
+    config: {
+      render: {
+        elevation: {
+          draw: true,
+          color: 'colorized'
+        },
+        rivers: {
+          draw: true
+        },
+        coastline: {
+          draw: true
+        }
+      }
+    }
+  }
+]
+
+const renderings = []
+
+for (let i = 0; i < 1; i++) {
+  const iterationFrames = JSON.parse(JSON.stringify(frames))
+  // const seed = new Date().getTime()
+  iterationFrames.forEach((r) => {
+    r.iteration = i
+    r.config.temperature = { globalModifier: i * 0.1 }
+    r.config.annotation = `temp global modifier: ${r.config.temperature.globalModifier}`
+  })
+  renderings.push(...iterationFrames)
+}
 
 renderings.forEach((r) => {
-  r.config.width = 100
-  r.config.height = 100
+  r.config.width = 400
+  r.config.height = 400
+  r.config.seed = '1337'
 })
 
-puppeteer.launch().then(async (browser) => {
-  const promises = []
-  renderings.forEach((r) => {
-    promises.push(browser.newPage().then(async (page) => {
-      await page.goto('http://localhost:8080', { timeout: 300000 })
-      await page.evaluate((config) => {
-        ojo.doItToIt(config)
-      }, r.config)
-      await page.screenshot({
-        path: `output/${r.name}.png`,
-        fullPage: true,
-        omitBackground: true
-      })
-    }))
+let browser
+
+const render = async (r) => {
+  const page = await browser.newPage()
+  await page.goto('http://localhost:8080', { timeout: 300000 })
+  await page.evaluate((config) => {
+    ojo.doItToIt(config)
+  }, r.config)
+  await page.screenshot({
+    path: `output/${r.config.seed}-${r.name}-${`0000${r.iteration}`.slice(-4)}.png`,
+    fullPage: true,
+    omitBackground: true
   })
-  await Promise.all(promises)
-  browser.close()
+  await page.close()
+}
+
+const promiseProducer = () => {
+  const rendering = renderings.pop()
+  return rendering !== undefined ? render(rendering) : null
+}
+
+puppeteer.launch().then(async (b) => {
+  browser = b
+  const pool = new PromisePool(promiseProducer, 8)
+  await pool.start()
+  await browser.close()
 })

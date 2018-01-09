@@ -1,15 +1,14 @@
-import seedrandom from 'seedrandom'
-import SimplexNoise from 'simplex-noise'
-
-export const mapParameters = {
+const mapParameters = {
   pdsMaxDistance: 4,
-  width: 700,
-  height: 700,
+  width: 400,
+  height: 400,
   // seed: 1514489481526,
   // seed: 1514632505452,
   // seed: 1514877216912,
-  seed: '1337',
+  seed: 1515445179725,
+  // seed: '1337',
   // seed: new Date().getTime(),
+  annotation: '',
   exportPng: false,
   seaLevel: 0.2,
   elevation: {
@@ -103,17 +102,17 @@ export const mapParameters = {
   },
   render: {
     shapeRendering: 'crispEdges', // auto, optimizeSpeed, crispEdges, geometricPrecision
-    drawCoastline: true,
+    drawCoastline: false,
     drawTriangles: false,
     elevation: {
-      draw: true,
+      draw: false,
       color: 'colorized', // greyscale, featureType, colorized, greyscaleNoWater
       useStepInsteadOfElevation: false,
       drawDownhill: false
     },
     plates: {
       draw: false,
-      drawForce: true
+      drawForce: false
     },
     temperature: {
       draw: false,
@@ -122,9 +121,9 @@ export const mapParameters = {
     },
     wind: {
       draw: false,
-      drawWindNetwork: true,
-      drawWindVectors: true,
-      drawWindVelocity: true
+      drawWindNetwork: false,
+      drawWindVectors: false,
+      drawWindVelocity: false
     },
     pressure: {
       draw: false
@@ -135,12 +134,13 @@ export const mapParameters = {
       type: 'moisture' // absoluteHumidity, relativeHumidity, moisture
     },
     biome: {
-      draw: true
+      draw: false
+    },
+    rivers: {
+      draw: false
     },
     drawSeed: true
   }
 }
 
-seedrandom(mapParameters.seed, { global: true })
-
-export const simplex = new SimplexNoise(Math.random)
+export default mapParameters

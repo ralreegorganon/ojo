@@ -1,4 +1,4 @@
-import { mapParameters } from 'parameters'
+import mapParameters from 'parameters'
 import { elevationInMetersAsl, temperatureInCelsius } from 'terrain/conversion'
 
 // pressure in kPa, temperature in C, returns density of water vapor in air (g/m^3)

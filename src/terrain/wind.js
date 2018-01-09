@@ -1,5 +1,5 @@
 import { ObjectVector } from 'vector2d'
-import { mapParameters } from 'parameters'
+import mapParameters from 'parameters'
 import { elevationInMetersAsl } from 'terrain/conversion'
 import { bounds, distanceFromPointToSegment } from 'utility/math'
 

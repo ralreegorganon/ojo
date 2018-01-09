@@ -1,4 +1,4 @@
-import { mapParameters } from 'parameters'
+import mapParameters from 'parameters'
 import { bounds } from 'utility/math'
 
 export function fillSinks(polygons, diagram) {

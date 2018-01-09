@@ -1,4 +1,4 @@
-import { mapParameters } from 'parameters'
+import mapParameters from 'parameters'
 
 export function elevationInMetersAsl(e) {
   if (e <= mapParameters.seaLevel) {

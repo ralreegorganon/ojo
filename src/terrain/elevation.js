@@ -1,5 +1,5 @@
 import { ObjectVector } from 'vector2d'
-import { mapParameters } from 'parameters'
+import mapParameters from 'parameters'
 import octavation from 'terrain/noise'
 import { bounds, distanceFromPointToSegment } from 'utility/math'
 
