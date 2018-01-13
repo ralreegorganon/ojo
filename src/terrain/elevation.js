@@ -144,6 +144,35 @@ function plateTectonicify(polygons, plates) {
   smooth(polygons)
 }
 
+function cleanUpCoastline(polygons) {
+  for (let i = 0; i < mapParameters.elevation.cleanUpCoastline.iterations; i++) {
+    polygons.forEach((p) => {
+      const above = []
+      let aboveMax = -Infinity
+      const below = []
+      let belowMax = Infinity
+      p.neighbors.forEach((n) => {
+        if (n.elevation >= mapParameters.seaLevel) {
+          above.push(n)
+          if (n.elevation > aboveMax) {
+            aboveMax = n.elevation
+          }
+        } else {
+          below.push(n)
+          if (n.elevation < belowMax) {
+            belowMax = n.elevation
+          }
+        }
+      })
+      if (p.elevation < mapParameters.seaLevel && above.length > below.length) {
+        p.elevation = aboveMax
+      } else if (p.elevation >= mapParameters.seaLevel && below.length > above.length) {
+        // p.elevation = belowMax
+      }
+    })
+  }
+}
+
 export default function setElevations(terrain, plates) {
   baseline(terrain.polygons)
 
@@ -165,5 +194,9 @@ export default function setElevations(terrain, plates) {
 
   if (mapParameters.elevation.step.apply) {
     step(terrain.polygons)
+  }
+
+  if (mapParameters.elevation.cleanUpCoastline.apply) {
+    cleanUpCoastline(terrain.polygons)
   }
 }

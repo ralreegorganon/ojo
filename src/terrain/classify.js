@@ -1,6 +1,10 @@
 import mapParameters from 'parameters'
 
 function setType(diagram, polygons) {
+  polygons.forEach((p) => {
+    p.featureType = undefined
+  })
+
   const queue = []
   const used = new Set()
 

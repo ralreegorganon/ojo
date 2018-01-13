@@ -39,6 +39,10 @@ const mapParameters = {
     },
     step: {
       apply: true
+    },
+    cleanUpCoastline: {
+      apply: true,
+      iterations: 4
     }
   },
   wind: {
@@ -102,10 +106,10 @@ const mapParameters = {
   },
   render: {
     shapeRendering: 'crispEdges', // auto, optimizeSpeed, crispEdges, geometricPrecision
-    drawCoastline: false,
+    drawCoastline: true,
     drawTriangles: false,
     elevation: {
-      draw: false,
+      draw: true,
       color: 'colorized', // greyscale, featureType, colorized, greyscaleNoWater
       useStepInsteadOfElevation: false,
       drawDownhill: false

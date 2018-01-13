@@ -446,139 +446,84 @@ function drawWind(g, polygons) {
 }
 
 function drawCoastline(g, polygons, diagram) {
-  const line = []
-  for (let i = 0; i < polygons.length; i++) {
-    if (polygons[i].elevation >= mapParameters.seaLevel) {
-      const cell = diagram.cells[i]
+  const features = new Map()
+
+  polygons.forEach((p) => {
+    if (p.featureType !== 'Land') {
+      return
+    }
+    if (!features.has(p.featureIndex)) {
+      features.set(p.featureIndex, [])
+    }
+    features.get(p.featureIndex).push(p)
+  })
+
+  const featureOutline = new Map()
+
+  features.forEach((featurePolygons, featureIndex) => {
+    const featureEdges = new Map()
+    featurePolygons.forEach((p) => {
+      const cell = diagram.cells[p.id]
       cell.halfedges.forEach((e) => {
         const edge = diagram.edges[e]
-        if (edge.left && edge.right) {
-          let ea = edge.left.index
-          if (ea === i) {
-            ea = edge.right.index
-          }
-          if (polygons[ea].elevation < mapParameters.seaLevel) {
-            // store edge start and end point separately
-            const start = edge[0].join(' ')
-            const end = edge[1].join(' ')
-            // store Island number for a ocean coast
-            let type
-            let number
-            if (polygons[ea].featureType === 'Ocean') {
-              type = 'Land'
-              number = polygons[i].featureIndex
-            } else {
-              type = 'Lake'
-              number = polygons[ea].featureIndex
-            }
-            // push Data to array
-            line.push({
-              start,
-              end,
-              type,
-              number
-            })
-          }
+
+        if (!featureEdges.has(edge)) {
+          featureEdges.set(edge, 0)
         }
+
+        featureEdges.set(edge, featureEdges.get(edge) + 1)
       })
-    }
-  }
+    })
 
-  const x = d3
-    .scaleLinear()
-    .domain([0, mapParameters.width])
-    .range([0, mapParameters.width])
-  const y = d3
-    .scaleLinear()
-    .domain([0, mapParameters.height])
-    .range([0, mapParameters.height])
-  const path = d3
-    .line()
-    .x(d => x(d.x))
-    .y(d => y(d.y))
-  // .curve(d3.curveBasisClosed)
-
-  {
-    let number = 0
-    let edgesOfFeature = line.filter(l => l.number === number && l.type === 'Land')
-    while (edgesOfFeature.length > 0) {
-      const coast = [] // array to store coastline for feature
-      const start = edgesOfFeature[0].start // start point of first element
-      let end = edgesOfFeature[0].end // end point of first element
-      edgesOfFeature.shift()
-      let spl = start.split(' ') // get array from string
-      coast.push({ x: spl[0], y: spl[1] }) // push start to coastline
-      spl = end.split(' ')
-      coast.push({ x: spl[0], y: spl[1] }) // push end to coastline
-      // use for instead of while to avoid eternal loop
-      for (let i = 0; end !== start && i < 2000; i++) {
-        const next = edgesOfFeature.filter(e => e.start === end || e.end === end)
-        if (next.length > 0) {
-          if (next[0].start === end) {
-            end = next[0].end
-          } else if (next[0].end === end) {
-            end = next[0].start
-          }
-          spl = end.split(' ')
-          coast.push({ x: spl[0], y: spl[1] })
-        }
-        const rem = edgesOfFeature.indexOf(next[0])
-        edgesOfFeature.splice(rem, 1)
+    const outerEdges = []
+    featureEdges.forEach((count, edge) => {
+      if (count === 1) {
+        outerEdges.push(edge)
       }
+    })
 
-      g
-        .append('path')
-        .attr('d', path(coast))
-        .attr('stroke', 'black')
-        .attr('stroke-width', '1')
-        .attr('stroke-linejoin', 'round')
-        .attr('fill', 'none')
+    const outerEdgePoints = []
+    while (outerEdges.length > 0) {
+      const start = outerEdges[0][0]
+      let end = outerEdges[0][1]
+      outerEdges.shift()
+      outerEdgePoints.push(start)
+      outerEdgePoints.push(end)
 
-      number += 1
-      edgesOfFeature = line.filter(l => l.number === number && l.type === 'Land')
-    }
-  }
-
-  {
-    let number = 0
-    let edgesOfFeature = line.filter(l => l.number === number && l.type === 'Lake')
-    while (edgesOfFeature.length > 0) {
-      const coast = [] // array to store coastline for feature
-      const start = edgesOfFeature[0].start // start point of first element
-      let end = edgesOfFeature[0].end // end point of first element
-      edgesOfFeature.shift()
-      let spl = start.split(' ') // get array from string
-      coast.push({ x: spl[0], y: spl[1] }) // push start to coastline
-      spl = end.split(' ')
-      coast.push({ x: spl[0], y: spl[1] }) // push end to coastline
-      // use for instead of while to avoid eternal loop
-      for (let i = 0; end !== start && i < 2000; i++) {
-        const next = edgesOfFeature.filter(e => e.start === end || e.end === end)
+      while (end[0] !== start[0] && end[1] !== start[1]) {
+        const next = outerEdges.filter(e => (e[0][0] === end[0] && e[0][1] === end[1]) || (e[1][0] === end[0] && e[1][1] === end[1]))
         if (next.length > 0) {
-          if (next[0].start === end) {
-            end = next[0].end
-          } else if (next[0].end === end) {
-            end = next[0].start
+          const n = next[0]
+          if (n[0][0] === end[0] && n[0][1] === end[1]) {
+            end = n[1]
+          } else if (n[1][0] === end[0] && n[1][1] === end[1]) {
+            end = n[0]
           }
-          spl = end.split(' ')
-          coast.push({ x: spl[0], y: spl[1] })
+          outerEdgePoints.push(end)
         }
-        const rem = edgesOfFeature.indexOf(next[0])
-        edgesOfFeature.splice(rem, 1)
+        const rem = outerEdges.indexOf(next[0])
+        outerEdges.splice(rem, 1)
       }
-
-      g
-        .append('path')
-        .attr('d', path(coast))
-        .attr('stroke', 'grey')
-        .attr('stroke-width', '0.9')
-        .attr('stroke-linejoin', 'round')
-        .attr('fill', 'none')
-
-      number += 1
-      edgesOfFeature = line.filter(l => l.number === number && l.type === 'Lake')
     }
-  }
+
+    featureOutline.set(featureIndex, outerEdgePoints)
+  })
+
+  const line = d3.line()
+    .x(d => d[0])
+    .y(d => d[1])
+    .curve(d3.curveLinear)
+    // .curve(d3.curveBasisClosed)
+
+  featureOutline.forEach((points, index) => {
+    g.append('path')
+      .attr('d', line(points))
+      .attr('stroke', 'black')
+      .attr('stroke-width', '0.5')
+      .attr('stroke-linejoin', 'round')
+      .attr('fill', 'none')
+      // .attr('fill', '#FCECC8')
+  })
 }
 
 function markers(defs) {
@@ -737,7 +682,7 @@ export default function draw(world) {
   svg
     .append('rect')
     .attr('fill', 'none')
-    .attr('pointer-events', 'none')
+    .attr('pointer-events', 'all')
     .attr('width', mapParameters.width)
     .attr('height', mapParameters.height)
     .call(d3.zoom().on('zoom', () => {
