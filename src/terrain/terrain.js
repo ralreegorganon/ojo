@@ -46,6 +46,7 @@ function buildPlates() {
 
 function buildTerrain() {
   const points = buildPoints(mapParameters.pdsMaxDistance)
+  console.log(points)
   const relaxedPoints = relaxPoints(points)
   const voronoi = d3.voronoi().extent([[0, 0], [mapParameters.width, mapParameters.height]])
   const diagram = voronoi(relaxedPoints)
