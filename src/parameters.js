@@ -8,7 +8,7 @@ const mapParameters = {
   seed: 1515445179725,
   // seed: '1337',
   // seed: new Date().getTime(),
-  annotation: '',
+  annotation: "",
   exportPng: false,
   seaLevel: 0.2,
   elevation: {
@@ -47,7 +47,7 @@ const mapParameters = {
   },
   wind: {
     maxIterations: 500,
-    sourceSet: 'mapEdge', // mapEdge, ocean, all
+    sourceSet: "mapEdge", // mapEdge, ocean, all
     northernPolarEasterlies: {
       startLatitude: 60,
       endLatitude: 90,
@@ -105,12 +105,12 @@ const mapParameters = {
     defaultErosionAmount: 0.1
   },
   render: {
-    shapeRendering: 'crispEdges', // auto, optimizeSpeed, crispEdges, geometricPrecision
+    shapeRendering: "crispEdges", // auto, optimizeSpeed, crispEdges, geometricPrecision
     drawCoastline: true,
     drawTriangles: false,
     elevation: {
       draw: true,
-      color: 'colorized', // greyscale, featureType, colorized, greyscaleNoWater
+      color: "colorized", // greyscale, featureType, colorized, greyscaleNoWater
       useStepInsteadOfElevation: false,
       drawDownhill: false
     },
@@ -120,8 +120,8 @@ const mapParameters = {
     },
     temperature: {
       draw: false,
-      opacity: '1.0',
-      color: 'linear' // band, linear
+      opacity: "1.0",
+      color: "linear" // band, linear
     },
     wind: {
       draw: false,
@@ -135,7 +135,7 @@ const mapParameters = {
     moisture: {
       draw: false,
       drawAmount: false,
-      type: 'moisture' // absoluteHumidity, relativeHumidity, moisture
+      type: "moisture" // absoluteHumidity, relativeHumidity, moisture
     },
     biome: {
       draw: false
@@ -145,6 +145,6 @@ const mapParameters = {
     },
     drawSeed: true
   }
-}
+};
 
-export default mapParameters
+export default mapParameters;

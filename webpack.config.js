@@ -1,24 +1,20 @@
-const path = require('path')
+const path = require("path");
 
 module.exports = {
-  entry: [
-    './src/index'
-  ],
+  mode: "development",
+  entry: ["./src/index"],
   output: {
-    path: path.join(__dirname, 'public'),
-    publicPath: '/',
-    filename: 'bundle.js',
-    sourcePrefix: ''
+    path: path.join(__dirname, "public"),
+    publicPath: "/",
+    filename: "bundle.js",
+    sourcePrefix: ""
   },
   devServer: {
-    contentBase: path.join(__dirname, '/public')
+    contentBase: path.join(__dirname, "/public")
   },
-  devtool: 'cheap-module-source-map',
+  devtool: "cheap-module-source-map",
   resolve: {
-    modules: [
-      path.resolve('./src'),
-      path.resolve('./node_modules')
-    ]
+    modules: [path.resolve("./src"), path.resolve("./node_modules")]
   },
   module: {
     rules: [
@@ -26,12 +22,12 @@ module.exports = {
         test: /\.js$/,
         exclude: /(node_modules)/,
         use: {
-          loader: 'babel-loader',
+          loader: "babel-loader",
           options: {
-            presets: ['@babel/preset-env']
+            presets: ["@babel/preset-env"]
           }
         }
       }
     ]
   }
-}
+};
