@@ -1,11 +1,12 @@
 import * as d3 from 'd3'
 import { interpolateSpectral } from 'd3-scale-chromatic'
+import { bounds } from 'utility/math'
 import mapParameters from 'parameters'
 
 const colorMoisture = d3.scaleSequential(interpolateSpectral)
 
 export default function drawMoisture(g, polygons) {
-  const maxAbsoluteHumidity = Math.max(...polygons.map(p => p.absoluteHumidity))
+  const { minAbsoluteHumidity, maxAbsoluteHumidity } = bounds(polygons, p => p.absoluteHumidity)
 
   const moistureGroup = g.append('g').attr('id', 'moisture')
   polygons.forEach((p) => {

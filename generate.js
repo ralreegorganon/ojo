@@ -83,7 +83,6 @@ const frames = [
   }
 ]
 */
-
 /*
 const frames = [
   {
@@ -186,11 +185,13 @@ const renderings = []
 
 for (let i = 0; i < 1; i++) {
   const iterationFrames = JSON.parse(JSON.stringify(frames))
-  // const seed = new Date().getTime()
+  const seed = new Date().getTime() * Math.random()
+  // const seed = 1245398943713.7385
   iterationFrames.forEach((r) => {
     r.iteration = i
-    r.config.temperature = { globalModifier: i * 0.1 }
-    r.config.annotation = `temp global modifier: ${r.config.temperature.globalModifier}`
+    r.config.seed = seed
+    // r.config.temperature = { globalModifier: i * 0.1 }
+    // r.config.annotation = `temp global modifier: ${r.config.temperature.globalModifier}`
   })
   renderings.push(...iterationFrames)
 }
@@ -198,7 +199,6 @@ for (let i = 0; i < 1; i++) {
 renderings.forEach((r) => {
   r.config.width = 400
   r.config.height = 400
-  r.config.seed = '1337'
 })
 
 let browser
