@@ -32,6 +32,6 @@ export function doItToIt(parameters) {
 }
 
 // console.profile()
-doItToIt();
+// doItToIt();
 // console.profileEnd()
-// require('expose-loader?ojo!index.js')
+require("expose-loader?ojo!index.js");
