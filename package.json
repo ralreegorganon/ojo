@@ -38,7 +38,6 @@
     "fast-memoize": "^2.5.1",
     "lodash": "^4.17.10",
     "poisson-disk-sampling": "^1.0.2",
-    "save-svg-as-png": "^1.4.5",
     "seedrandom": "^2.4.3",
     "simplex-noise": "^2.4.0",
     "vector2d": "^3.0.0"

@@ -9,7 +9,6 @@ const mapParameters = {
   // seed: '1337',
   // seed: new Date().getTime(),
   annotation: '',
-  exportPng: false,
   seaLevel: 0.2,
   elevation: {
     octavation: {
