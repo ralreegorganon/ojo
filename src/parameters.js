@@ -106,7 +106,6 @@ const mapParameters = {
   },
   render: {
     shapeRendering: "crispEdges", // auto, optimizeSpeed, crispEdges, geometricPrecision
-    drawCoastline: true,
     drawTriangles: false,
     elevation: {
       draw: true,
@@ -142,6 +141,9 @@ const mapParameters = {
     },
     rivers: {
       draw: false
+    },
+    coastline: {
+      draw: true
     },
     drawSeed: true
   }

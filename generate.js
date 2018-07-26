@@ -222,59 +222,7 @@ const render = async (r) => {
 
   const selection = await page.evaluate(
     (prefix) => {
-      function explicitlySetStyle(element) {
-        const cssDeclarationComputed = getComputedStyle(element)
-        let computedStyleString = ''
-        const emptySvgComputedStyle = getComputedStyle(window.document.createElementNS(prefix.svg, 'svg'))
-
-        for (let i = 0; i < cssDeclarationComputed.length; i++) {
-          const key = cssDeclarationComputed[i]
-          const value = cssDeclarationComputed.getPropertyValue(key)
-
-          if (value !== emptySvgComputedStyle.getPropertyValue(key)) {
-            computedStyleString += `${key}:${value};`
-          }
-        }
-        return element
-      }
-
-      function traverse(obj) {
-        const tree = []
-        tree.push(obj)
-        visit(obj)
-
-        function visit(node) {
-          if (node && node.hasChildNodes()) {
-            let child = node.firstChild
-            while (child) {
-              if (child.nodeType === 1 && child.nodeName != 'SCRIPT') {
-                tree.push(child)
-                visit(child)
-              }
-              child = child.nextSibling
-            }
-          }
-        }
-        return tree
-      }
-
       const documents = [window.document]
-      const iframes = document.querySelectorAll('iframe')
-      const objects = document.querySelectorAll('object')
-
-      for (let i = 0; i < iframes.length; i++) {
-        const el = el.contentDocument
-        if (el) {
-          documents.push(el)
-        }
-      }
-
-      for (let i = 0; i < objects.length; i++) {
-        const el = el.contentDocument
-        if (el) {
-          documents.push(el)
-        }
-      }
 
       const newSources = []
       for (let i = 0; i < documents.length; i++) {
@@ -282,8 +230,8 @@ const render = async (r) => {
 
         const svgSelectAll = doc.querySelectorAll('svg')
 
-        for (let i = 0; i < svgSelectAll.length; i++) {
-          const svg = svgSelectAll[i]
+        for (let j = 0; j < svgSelectAll.length; j++) {
+          const svg = svgSelectAll[j]
 
           svg.setAttribute('version', '1.1')
           svg.removeAttribute('xmlns')
@@ -296,17 +244,6 @@ const render = async (r) => {
           if (!svg.hasAttributeNS(prefix.xmlns, 'xmlns:xlink')) {
             svg.setAttributeNS(prefix.xmlns, 'xmlns:xlink', prefix.xlink)
           }
-
-          const svgElements = traverse(svg)
-
-          const svgElementsWithStyle = []
-          for (let i = 0; i < svgElements.length; i++) {
-            svgElementsWithStyle.push(explicitlySetStyle(svgElements[i]))
-          }
-
-          // console.log(svg.childElementCount);  //node
-          // console.log(svgElements.length);     //array
-          // console.log(svgElementsWithStyle.length);    //array
 
           const source = new XMLSerializer().serializeToString(svg)
           const rect = svg.getBoundingClientRect()

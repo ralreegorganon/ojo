@@ -56,7 +56,7 @@ export default function draw(world) {
     drawRivers(g, world.terrain.polygons)
   }
 
-  if (mapParameters.render.drawCoastline) {
+  if (mapParameters.render.coastline.draw) {
     drawCoastline(g, world.terrain.polygons, world.terrain.diagram)
   }
 
