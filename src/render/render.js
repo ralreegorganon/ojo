@@ -81,9 +81,11 @@ export default function draw(world) {
     .attr('pointer-events', 'all')
     .attr('width', mapParameters.width)
     .attr('height', mapParameters.height)
-    .call(d3.zoom().on('zoom', () => {
-      g.attr('transform', d3.event.transform)
-    }))
+    .call(
+      d3.zoom().on('zoom', () => {
+        g.attr('transform', d3.event.transform)
+      })
+    )
 
   svg
     .append('text')

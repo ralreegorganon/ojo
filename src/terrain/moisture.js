@@ -5,7 +5,7 @@ import { elevationInMetersAsl, temperatureInCelsius } from 'terrain/conversion'
 function vaporPressureToAbsoluteHumidty(pressure, temperature) {
   const p = pressure * 1000
   const t = temperature + 273.15
-  const d = 2.16679 * p / t
+  const d = (2.16679 * p) / t
   return d
 }
 
@@ -13,7 +13,7 @@ function vaporPressureToAbsoluteHumidty(pressure, temperature) {
 function absoluteHumidtyToVaporPressure(density, temperature) {
   const d = density
   const t = temperature + 273.15
-  const p = d * t / 2.16679 / 1000
+  const p = (d * t) / 2.16679 / 1000
   return p
 }
 
@@ -52,7 +52,7 @@ function evaporationRate(temperature, pressure, solarInsolation, windSpeed, satu
   const es = saturationVaporPressure
   const ea = actualVaporPressure
   const psychrometric = 0.000665 * pressure
-  const slope = 4098 * (0.6108 * Math.exp(17.27 * t / (t + 237.3))) / (t + 237.3) ** 2
+  const slope = (4098 * (0.6108 * Math.exp((17.27 * t) / (t + 237.3)))) / (t + 237.3) ** 2
   const er = (0.408 * slope * (r - g) + psychrometric * (900 / (t + 273)) * u2 * (es - ea)) / (slope + psychrometric * (1 + 0.34 * u2))
   return er
 }
@@ -154,7 +154,7 @@ function propagate(diagram, polygons) {
           current.absoluteHumidity += possibleEr / 100
 
           if (ne > ce) {
-            const tempChange = (ne - ce) ** 1 / 1000 * 0.03
+            const tempChange = ((ne - ce) ** 1 / 1000) * 0.03
             const orographicLiftRh = relativeHumidity(current.absoluteHumidity, ct - tempChange)
             if (orographicLiftRh > 1) {
               const diff = Math.min(current.absoluteHumidity, (orographicLiftRh - 1) * current.absoluteHumidity) / wf
@@ -162,7 +162,7 @@ function propagate(diagram, polygons) {
               current.absoluteHumidity -= diff
 
               if (next.target !== undefined && next.target.elevation > ne) {
-                const nTempChange = (next.target.elevation - ne) ** 1 / 1000 * 0.03
+                const nTempChange = ((next.target.elevation - ne) ** 1 / 1000) * 0.03
                 const nOrographicLiftRh = relativeHumidity(current.absoluteHumidity, nt - nTempChange)
                 if (nOrographicLiftRh > 1) {
                   const nDiff = Math.min(current.absoluteHumidity, (nOrographicLiftRh - 1) * current.absoluteHumidity) / wf / 10
@@ -174,7 +174,7 @@ function propagate(diagram, polygons) {
           }
 
           if (crh > 1) {
-            const diff = (crh - 1) * current.absoluteHumidity / wf
+            const diff = ((crh - 1) * current.absoluteHumidity) / wf
             current.moisture += diff * 100
             current.absoluteHumidity -= diff
           }
@@ -187,7 +187,7 @@ function propagate(diagram, polygons) {
 
           const random = Math.random()
           if (current.featureType === 'Land' && random < 0.2 && current.absoluteHumidity > 0) {
-            const diff = current.absoluteHumidity * random / wf
+            const diff = (current.absoluteHumidity * random) / wf
             current.moisture += diff * 100
             current.absoluteHumidity -= diff
           }
@@ -256,7 +256,7 @@ function propagate(diagram, polygons) {
           current.absoluteHumidity += possibleEr / 100
 
           if (ne > ce) {
-            const tempChange = (ne - ce) ** 1 / 1000 * 0.03
+            const tempChange = ((ne - ce) ** 1 / 1000) * 0.03
             const orographicLiftRh = relativeHumidity(current.absoluteHumidity, ct - tempChange)
             if (orographicLiftRh > 1) {
               const diff = Math.min(current.absoluteHumidity, (orographicLiftRh - 1) * current.absoluteHumidity) / wf
@@ -265,7 +265,7 @@ function propagate(diagram, polygons) {
             }
 
             if (next.target !== undefined && next.target.elevation > ne) {
-              const nTempChange = (next.target.elevation - ne) ** 1 / 1000 * 0.03
+              const nTempChange = ((next.target.elevation - ne) ** 1 / 1000) * 0.03
               const nOrographicLiftRh = relativeHumidity(current.absoluteHumidity, nt - nTempChange)
               if (nOrographicLiftRh > 1) {
                 const nDiff = Math.min(current.absoluteHumidity, (nOrographicLiftRh - 1) * current.absoluteHumidity) / wf / 10
@@ -276,7 +276,7 @@ function propagate(diagram, polygons) {
           }
 
           if (crh > 1) {
-            const diff = (crh - 1) * current.absoluteHumidity / wf
+            const diff = ((crh - 1) * current.absoluteHumidity) / wf
             current.moisture += diff * 100
             current.absoluteHumidity -= diff
           }
@@ -289,7 +289,7 @@ function propagate(diagram, polygons) {
 
           const random = Math.random()
           if (current.featureType === 'Land' && random < 0.2 && current.absoluteHumidity > 0) {
-            const diff = current.absoluteHumidity * random / wf
+            const diff = (current.absoluteHumidity * random) / wf
             current.moisture += diff * 100
             current.absoluteHumidity -= diff
           }

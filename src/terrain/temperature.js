@@ -5,21 +5,21 @@ import { bounds } from 'utility/math'
 import memoize from 'fast-memoize'
 
 function declination(day) {
-  return 23.45 * Math.sin(Math.PI * 360 / 365 / 180 * (day + 284))
+  return 23.45 * Math.sin(((Math.PI * 360) / 365 / 180) * (day + 284))
 }
 
 const memoizedDeclination = memoize(declination)
 
 function hourAngle(hour) {
-  return 360 / 24 * (hour - 12)
+  return (360 / 24) * (hour - 12)
 }
 
 const memoizedHourAngle = memoize(hourAngle)
 
 function zenith(latitude, day, hour) {
-  const l = latitude * Math.PI / 180
-  const d = memoizedDeclination(day) * Math.PI / 180
-  const h = memoizedHourAngle(hour) * Math.PI / 180
+  const l = (latitude * Math.PI) / 180
+  const d = (memoizedDeclination(day) * Math.PI) / 180
+  const h = (memoizedHourAngle(hour) * Math.PI) / 180
   const z = Math.acos(Math.sin(l) * Math.sin(d) + Math.cos(l) * Math.cos(d) * Math.cos(h))
 
   return z
@@ -56,7 +56,7 @@ function elevation(polygons) {
   polygons.forEach((p) => {
     if (p.elevation > mapParameters.seaLevel) {
       const metersAboveSeaLevel = elevationInMetersAsl(p.elevation)
-      const tempDecreaseDueToAltitude = metersAboveSeaLevel / 1000 * 0.03
+      const tempDecreaseDueToAltitude = (metersAboveSeaLevel / 1000) * 0.03
 
       p.temperature -= tempDecreaseDueToAltitude
       p.elevationTemperature = tempDecreaseDueToAltitude

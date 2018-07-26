@@ -165,12 +165,12 @@ const frames = [
 
 const frames = [
   {
-    name: "terrain",
+    name: 'terrain',
     config: {
       render: {
         elevation: {
           draw: true,
-          color: "colorized"
+          color: 'colorized'
         },
         rivers: {
           draw: true
@@ -181,7 +181,7 @@ const frames = [
       }
     }
   }
-];
+]
 
 const renderings = []
 

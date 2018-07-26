@@ -97,8 +97,7 @@ function fluxify(polygons) {
       if (p.featureType === 'Land') {
         p.downhill.target.downhill.flux += p.downhill.flux
 
-        const river =
-          Math.sqrt(p.downhill.flux) * p.downhill.slope * mapParameters.erosion.riverFactor
+        const river = Math.sqrt(p.downhill.flux) * p.downhill.slope * mapParameters.erosion.riverFactor
         const creep = p.downhill.slope * p.downhill.slope * mapParameters.erosion.creepFactor
 
         p.downhill.erosionRate = Math.min(river + creep, mapParameters.erosion.maxErosionRate)
@@ -110,8 +109,7 @@ function erode(polygons) {
   const minMax = bounds(polygons, p => p.downhill.erosionRate)
 
   polygons.forEach((p) => {
-    p.elevation -=
-      mapParameters.erosion.defaultErosionAmount * (p.downhill.erosionRate / minMax.max)
+    p.elevation -= mapParameters.erosion.defaultErosionAmount * (p.downhill.erosionRate / minMax.max)
   })
 
   polygons.forEach((p) => {
