@@ -84,6 +84,16 @@ export default function drawElevation(g, polygons) {
     const downhillGroup = g.append('g').attr('id', 'downhill')
 
     polygons.forEach((p) => {
+      if (p.downhill.target === undefined) {
+        downhillGroup
+          .append('path')
+          .attr('d', `M${p.join('L')}Z`)
+          .attr('stroke', 'green')
+          .attr('stroke-width', '1')
+      }
+    })
+
+    polygons.forEach((p) => {
       if (p.downhill.target !== undefined) {
         const data = [{ x: p.data[0], y: p.data[1] }, { x: p.downhill.target.data[0], y: p.downhill.target.data[1] }]
         downhillGroup

@@ -78,7 +78,7 @@ function setType(diagram, polygons) {
 
 export function markRivers(polygons) {
   polygons.forEach((p) => {
-    p.isRiver = p.featureType === 'Land' && p.downhill !== undefined && p.downhill.flux > 1000
+    p.isRiver = p.featureType === 'Land' && p.downhill !== undefined && p.downhill.flux > mapParameters.rivers.minimumFlux
   })
 }
 

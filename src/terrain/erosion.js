@@ -94,7 +94,7 @@ function fluxify(polygons) {
     .slice()
     .sort((a, b) => b.elevation - a.elevation)
     .forEach((p) => {
-      if (p.featureType === 'Land') {
+      if (p.featureType === 'Land' && p.downhill.target !== undefined) {
         p.downhill.target.downhill.flux += p.downhill.flux
 
         const river = Math.sqrt(p.downhill.flux) * p.downhill.slope * mapParameters.erosion.riverFactor

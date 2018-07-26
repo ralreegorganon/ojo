@@ -26,6 +26,13 @@ export default function drawRivers(g, polygons) {
         .attr('stroke', 'blue')
         .attr('stroke-width', 0.5)
         .attr('stroke-linejoin', 'round')
+
+      riverGroup
+        .append('text')
+        .attr('x', (p.downhill.target.data[0] + p.data[0]) / 2)
+        .attr('y', (p.downhill.target.data[1] + p.data[1]) / 2)
+        .attr('font-size', '2px')
+        .text(p.downhill.flux.toFixed(0))
     }
   })
 }

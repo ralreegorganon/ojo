@@ -104,6 +104,9 @@ const mapParameters = {
     maxErosionRate: 50,
     defaultErosionAmount: 0.1
   },
+  rivers: {
+    minimumFlux: 1000
+  },
   render: {
     shapeRendering: 'crispEdges', // auto, optimizeSpeed, crispEdges, geometricPrecision
     drawTriangles: false,
