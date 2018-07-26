@@ -1,7 +1,7 @@
 const mapParameters = {
   pdsMaxDistance: 4,
-  width: 400,
-  height: 400,
+  width: 512,
+  height: 512,
   // seed: 1514489481526,
   // seed: 1514632505452,
   // seed: 1514877216912,

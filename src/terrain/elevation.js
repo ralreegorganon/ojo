@@ -20,15 +20,22 @@ function elevationOctavation(x, y) {
 function islandMask(x, y) {
   const { width, height } = mapParameters
 
-  const dx = Math.abs(x - width * 0.5)
-  const dy = Math.abs(y - height * 0.5)
-  const d = Math.max(dx, dy)
+  const d1 = distanceFromPointToSegment(x, y, 0, 0, width, 0, true)
+  const d2 = distanceFromPointToSegment(x, y, 0, 0, 0, height, true)
+  const d3 = distanceFromPointToSegment(x, y, 0, height, width, height, true)
+  const d4 = distanceFromPointToSegment(x, y, width, 0, width, width, true)
 
-  const mw = width * 0.55 - mapParameters.elevation.islandMask.margin
-  const delta = d / mw
-  const g = delta * delta
+  const dm = Math.min(d1, d2, d3, d4)
 
-  return g
+  const max = Math.max(width, height) / 2
+
+  const f = dm / max
+
+  if (mapParameters.elevation.islandMask.margin < 5) {
+    return 0
+  }
+
+  return f
 }
 
 function normalize(polygons) {
@@ -47,8 +54,8 @@ function sculpt(polygons, exponent) {
 
 function step(polygons) {
   polygons.forEach((p) => {
-    p.step = mapParameters.elevation.islandMask.apply ? islandMask(p.data[0], p.data[1]) : 0
-    p.elevation *= Math.max(0, 1 - p.step)
+    p.step = mapParameters.elevation.islandMask.apply ? islandMask(p.data[0], p.data[1]) : 1
+    p.elevation *= Math.max(0, p.step)
   })
 }
 
