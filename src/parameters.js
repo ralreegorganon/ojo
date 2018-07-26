@@ -48,6 +48,7 @@ const mapParameters = {
   wind: {
     maxIterations: 500,
     sourceSet: 'mapEdge', // mapEdge, ocean, all
+    temperatureDifferentialScalingFactor: 4,
     northernPolarEasterlies: {
       startLatitude: 60,
       endLatitude: 90,

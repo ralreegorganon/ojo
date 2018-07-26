@@ -227,7 +227,7 @@ function flow(diagram, polygons) {
       forwardEdges.forEach((fe) => {
         let scalar = windForceScalar(p, fe.polygon)
 
-        scalar += (fe.polygon.temperature - p.temperature) * 4
+        scalar += (fe.polygon.temperature - p.temperature) * mapParameters.wind.temperatureDifferentialScalingFactor
 
         const force = fe.direction.clone().multiplyByScalar(scalar)
         incoming.get(fe.polygon).push(force)
